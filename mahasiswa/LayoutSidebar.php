@@ -74,10 +74,21 @@ function is_active_new($page, $current) {
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const toggleSidebar = document.getElementById('toggleSidebar');
         const sidebar = document.getElementById('sidebar');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const toggleSidebarTopbar = document.getElementById('toggleSidebarTopbar'); // Ngambil hamburger menu dari topbar mobile
+
+        // 1. Jalur Desktop: Tombol toggle yang ada di dalem sidebar
         if (toggleSidebar && sidebar) {
             toggleSidebar.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+
+        // 2. Jalur Mobile: Tombol hamburger yang ada di topbar luar (LayoutHeader.php)
+        if (toggleSidebarTopbar && sidebar) {
+            toggleSidebarTopbar.addEventListener('click', (e) => {
+                e.stopPropagation(); // Biar event click-nya gak tabrakan/memicu document click
                 sidebar.classList.toggle('collapsed');
             });
         }
