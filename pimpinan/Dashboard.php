@@ -49,7 +49,7 @@ $q_leaderboard = $conn->query("
 ");
 $leaderboard_data = [];
 if ($q_leaderboard) {
-    while($r = $q_leaderboard->fetch_assoc()) {
+    while ($r = $q_leaderboard->fetch_assoc()) {
         $leaderboard_data[] = $r;
     }
 }
@@ -89,7 +89,8 @@ $chart_labels_json = json_encode(array_values(array_map('strval', $tahuns_chart)
 $chart_akademik_json = json_encode(array_values(array_column($chart_data, 'akademik')));
 $chart_nonakademik_json = json_encode(array_values(array_column($chart_data, 'nonakademik')));
 
-function getInitialsNew($name) {
+function getInitialsNew($name)
+{
     if (!$name) return '-';
     $words = explode(' ', trim($name));
     $initials = strtoupper(substr($words[0], 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
@@ -100,6 +101,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -111,86 +113,412 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
     <link rel="stylesheet" href="../administrator/Assets/Css/Style.css?v=<?= time() ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        html, body {
+        html,
+        body {
             overflow-x: hidden !important;
             max-width: 100%;
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
         * {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        ::-webkit-scrollbar:horizontal { display: none !important; }
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .content-wrapper-new { padding: 30px; overflow-x: hidden !important; width: 100%; box-sizing: border-box; }
+
+        ::-webkit-scrollbar:horizontal {
+            display: none !important;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .content-wrapper-new {
+            padding: 30px;
+            overflow-x: hidden !important;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
         /* Dashboard Header */
-        .dash-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
-        .dash-title h1 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; color: #0f172a; }
-        .dash-title p { margin: 0; font-size: 13px; color: #64748b; }
-        .dash-date { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .dash-date i { font-size: 20px; color: #3b82f6; }
-        .dash-date-text { font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.3; }
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
 
-        .section-title { font-size: 13px; font-weight: 700; color: #2563eb; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .dash-title h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .dash-title p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .dash-date {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        }
+
+        .dash-date i {
+            font-size: 20px;
+            color: #3b82f6;
+        }
+
+        .dash-date-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
 
         /* Stats Cards */
-        .top-stats-wrap { display: flex; gap: 20px; margin-bottom: 25px; flex-direction: column;}
-        .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        .stat-card-new { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; transition: all 0.2s ease; position: relative; overflow: hidden; }
-        .stat-card-new:hover { transform: translateY(-2px); box-shadow: 0 4px 12px -4px rgba(0,0,0,0.05); border-color: #cbd5e1; }
-        .stat-card-new::before { content: ''; position: absolute; left: 0; top: 0; width: 3px; height: 100%; }
-        .stat-card-new.sc-blue::before { background-color: #3b82f6; }
-        .stat-card-new.sc-green::before { background-color: #10b981; }
-        .stat-card-new.sc-orange::before { background-color: #f59e0b; }
-        .stat-card-new.sc-red::before { background-color: #ef4444; }
-        .sc-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; }
-        .sc-info { display: flex; flex-direction: column; width: 100%; justify-content: center; }
-        .sc-title { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase; }
-        .sc-val { font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-        .sc-sub { font-size: 11px; color: #94a3b8; font-weight: 500; }
-        
-        .bg-light-blue { background: #eff6ff; color: #3b82f6; }
-        .bg-light-green { background: #ecfdf5; color: #10b981; }
-        .bg-light-orange { background: #fffbeb; color: #f59e0b; }
-        .bg-light-red { background: #fef2f2; color: #ef4444; }
+        .top-stats-wrap {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-direction: column;
+        }
 
-        .mid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .panel-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); padding: 20px; display: flex; flex-direction: column; }
-        .pc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .pc-title { font-size: 14px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
-        .pc-link { font-size: 11px; font-weight: 700; color: #2563eb; text-decoration: none; display: flex; align-items: center; gap: 5px; transition: background-color 0.2s; padding: 4px 8px; border-radius: 6px; }
-        .pc-link:hover { background: #eff6ff; }
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
 
-        .ts-list { display: flex; flex-direction: column; gap: 8px; }
-        .ts-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .ts-item:hover { background: #f8fafc; border-color: #e2e8f0; transform: translateX(6px); }
-        .ts-left { display: flex; align-items: center; gap: 12px; }
-        .ts-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
-        .av-orange { background: #f59e0b; } .av-purple { background: #8b5cf6; } .av-blue { background: #3b82f6; } .av-cyan { background: #06b6d4; } .av-pink { background: #ec4899; }
-        .ts-name { font-size: 12px; font-weight: 700; color: #0f172a; }
-        .ts-points { font-size: 13px; font-weight: 800; color: #0f172a; }
+        .stat-card-new {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-        .chart-container { position: relative; height: 250px; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .stat-card-new:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        .stat-card-new::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+        }
+
+        .stat-card-new.sc-blue::before {
+            background-color: #3b82f6;
+        }
+
+        .stat-card-new.sc-green::before {
+            background-color: #10b981;
+        }
+
+        .stat-card-new.sc-orange::before {
+            background-color: #f59e0b;
+        }
+
+        .stat-card-new.sc-red::before {
+            background-color: #ef4444;
+        }
+
+        .sc-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .sc-info {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .sc-title {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .sc-val {
+            font-size: 26px;
+            color: #0f172a;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .sc-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .bg-light-blue {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .bg-light-green {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .bg-light-orange {
+            background: #fffbeb;
+            color: #f59e0b;
+        }
+
+        .bg-light-red {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .mid-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pc-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pc-link {
+            font-size: 11px;
+            font-weight: 700;
+            color: #2563eb;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .pc-link:hover {
+            background: #eff6ff;
+        }
+
+        .ts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ts-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .ts-item:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            transform: translateX(6px);
+        }
+
+        .ts-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ts-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .av-orange {
+            background: #f59e0b;
+        }
+
+        .av-purple {
+            background: #8b5cf6;
+        }
+
+        .av-blue {
+            background: #3b82f6;
+        }
+
+        .av-cyan {
+            background: #06b6d4;
+        }
+
+        .av-pink {
+            background: #ec4899;
+        }
+
+        .ts-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .ts-points {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         /* Animations */
-        @keyframes fadeInUpSmooth { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-slide-up { animation: fadeInUpSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; }
-        
+        @keyframes fadeInUpSmooth {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-up {
+            animation: fadeInUpSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .d-1 {
+            animation-delay: 0.1s;
+        }
+
+        .d-2 {
+            animation-delay: 0.2s;
+        }
+
         @media (max-width: 1024px) {
-            .mid-grid { grid-template-columns: 1fr; }
+            .mid-grid {
+                grid-template-columns: 1fr;
+            }
         }
+
         @media (max-width: 768px) {
-            .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
-            .content-wrapper-new { padding: 15px; }
+            .stats-grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-wrapper-new {
+                padding: 15px;
+            }
         }
+
         @media (max-width: 480px) {
-            .stats-grid-4 { grid-template-columns: 1fr; }
+            .stats-grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar Normal (terbuka) */
+        .sidebar-new {
+            width: 250px;
+            transition: all 0.3s ease;
+            /* Biar animasinya halus */
+            position: fixed;
+            height: 100%;
+            left: 0;
+            display: block;
+            /* Pastikan defaultnya block */
+        }
+
+        /* Sidebar saat di-tutup (collapsed) */
+        .sidebar-new.collapsed {
+            width: 0;
+            /* Atau kalau mau cuma ngecil, set ke 80px */
+            opacity: 0;
+            /* Biar gak kelihatan */
+            pointer-events: none;
+            /* Biar menu di dalamnya nggak bisa diklik pas nutup */
+            overflow: hidden;
         }
     </style>
 </head>
+
 <body class="dashboard-body new-dashboard">
 
     <!-- Sidebar -->
@@ -264,32 +592,33 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                         <a href="Leaderboard.php" class="pc-link">Lihat Semua <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                     <div class="ts-list">
-                        <?php if(empty($leaderboard_data)): ?>
+                        <?php if (empty($leaderboard_data)): ?>
                             <div style="padding: 20px; text-align: center; color: #64748b; font-size: 13px;">Belum ada data mahasiswa.</div>
                         <?php else: ?>
-                            <?php 
+                            <?php
                             $i = 0;
-                            foreach($leaderboard_data as $lb): 
+                            foreach ($leaderboard_data as $lb):
                                 $av = $avatar_classes[$i % count($avatar_classes)];
                                 $initials = getInitialsNew($lb['nama']);
                                 $av_bg = '';
-                                if($av == 'av-orange') $av_bg = 'background: #f59e0b;';
-                                if($av == 'av-purple') $av_bg = 'background: #8b5cf6;';
-                                if($av == 'av-blue') $av_bg = 'background: #3b82f6;';
-                                if($av == 'av-cyan') $av_bg = 'background: #06b6d4;';
-                                if($av == 'av-pink') $av_bg = 'background: #ec4899;';
+                                if ($av == 'av-orange') $av_bg = 'background: #f59e0b;';
+                                if ($av == 'av-purple') $av_bg = 'background: #8b5cf6;';
+                                if ($av == 'av-blue') $av_bg = 'background: #3b82f6;';
+                                if ($av == 'av-cyan') $av_bg = 'background: #06b6d4;';
+                                if ($av == 'av-pink') $av_bg = 'background: #ec4899;';
                             ?>
-                            <div class="ts-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-                                <div class="ts-left" style="display: flex; align-items: center; gap: 12px;">
-                                    <div class="ts-avatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; <?= $av_bg ?>"><?= $initials ?></div>
-                                    <div>
-                                        <div class="ts-name" style="font-size: 12px; font-weight: 700; color: #0f172a;"><?= htmlspecialchars($lb['nama']) ?></div>
-                                        <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['prodi']) ?></div>
+                                <div class="ts-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                                    <div class="ts-left" style="display: flex; align-items: center; gap: 12px;">
+                                        <div class="ts-avatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; <?= $av_bg ?>"><?= $initials ?></div>
+                                        <div>
+                                            <div class="ts-name" style="font-size: 12px; font-weight: 700; color: #0f172a;"><?= htmlspecialchars($lb['nama']) ?></div>
+                                            <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['prodi']) ?></div>
+                                        </div>
                                     </div>
+                                    <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
                                 </div>
-                                <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
-                            </div>
-                            <?php $i++; endforeach; ?>
+                            <?php $i++;
+                            endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -313,132 +642,34 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
         </div>
     </main>
 
-    <script>
+    <!-- <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const countElements = document.querySelectorAll('.count-up');
-            countElements.forEach(el => {
-                const targetValue = parseInt(el.getAttribute('data-value'), 10) || 0;
-                let startValue = 0;
-                const duration = 1500; 
-                let startTimestamp = null;
-                const step = (timestamp) => {
-                    if (!startTimestamp) startTimestamp = timestamp;
-                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                    const easeProgress = 1 - Math.pow(1 - progress, 4);
-                    const current = Math.floor(easeProgress * (targetValue - startValue) + startValue);
-                    el.innerText = current > 999 ? current.toLocaleString('id-ID') : current;
-                    if (progress < 1) {
-                        window.requestAnimationFrame(step);
-                    } else {
-                        el.innerText = targetValue > 999 ? targetValue.toLocaleString('id-ID') : targetValue;
-                    }
-                };
-                window.requestAnimationFrame(step);
-            });
+            const sidebar = document.getElementById('sidebar');
+            const btnDesktop = document.getElementById('toggleSidebar'); // Tombol dalam sidebar
+            const btnMobile = document.getElementById('toggleSidebarTopbar'); // Tombol di topbar
 
-            const ctx = document.getElementById('perkembanganChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: <?= $chart_labels_json ?>,
-                        datasets: [
-                            {
-                                label: 'Akademik',
-                                data: <?= $chart_akademik_json ?>,
-                                backgroundColor: '#3b82f6',
-                                borderColor: '#3b82f6',
-                                borderWidth: 0,
-                                hoverBackgroundColor: '#2563eb', 
-                                hoverBorderColor: '#2563eb',
-                                hoverBorderWidth: 6,
-                                borderRadius: 6,
-                                barPercentage: 0.6,
-                                categoryPercentage: 0.8
-                            },
-                            {
-                                label: 'Non Akademik',
-                                data: <?= $chart_nonakademik_json ?>,
-                                backgroundColor: '#10b981',
-                                borderColor: '#10b981',
-                                borderWidth: 0,
-                                hoverBackgroundColor: '#059669', 
-                                hoverBorderColor: '#059669',
-                                hoverBorderWidth: 6,
-                                borderRadius: 6,
-                                barPercentage: 0.6,
-                                categoryPercentage: 0.8
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'bottom',
-                                labels: {
-                                    font: { family: 'Inter', size: 12, weight: '600' },
-                                    color: '#475569',
-                                    usePointStyle: true,
-                                    boxWidth: 8
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                titleFont: { size: 13, family: 'Inter' },
-                                bodyFont: { size: 13, family: 'Inter' },
-                                padding: 10,
-                                cornerRadius: 8,
-                                mode: 'index',
-                                intersect: false,
-                                displayColors: true,
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { precision: 0, font: { family: 'Inter', size: 11 }, color: '#64748b' },
-                                grid: { color: '#f1f5f9', drawBorder: false }
-                            },
-                            x: {
-                                ticks: { font: { family: 'Inter', size: 12, weight: '600' }, color: '#334155' },
-                                grid: { display: false, drawBorder: false }
-                            }
-                        },
-                        animations: {
-                            y: {
-                                duration: 2000,
-                                easing: 'easeOutCubic',
-                                from: (ctx) => {
-                                    if (ctx.type === 'data') {
-                                        return ctx.chart.scales.y.getPixelForValue(0);
-                                    }
-                                },
-                                delay: (context) => {
-                                    let delay = 0;
-                                    if (context.type === 'data' && context.mode === 'default' && !window.chartAnimDone) {
-                                        delay = context.dataIndex * 300 + context.datasetIndex * 150;
-                                    }
-                                    return delay;
-                                }
-                            }
-                        },
-                        animation: {
-                            onComplete: () => {
-                                window.chartAnimDone = true;
-                            }
-                        },
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
-                        }
-                    }
-                });
+            // Fungsi utama toggle
+            function triggerSidebar(e) {
+                if (e) e.preventDefault();
+                if (sidebar) {
+                    sidebar.classList.toggle('collapsed');
+                    console.log("Sidebar toggled!"); // Debug: Cek di Inspect -> Console
+                }
             }
+
+            // Bind event ke tombol
+            if (btnDesktop) btnDesktop.addEventListener('click', triggerSidebar);
+            if (btnMobile) btnMobile.addEventListener('click', triggerSidebar);
+
+            // Auto-collapse kalau layar di-resize (Opsional, hapus kalau mau manual saja)
+            window.addEventListener('resize', () => {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.add('collapsed');
+                }
+            });
         });
-    </script>
+    </script> -->
     <script src="../administrator/Assets/Js/Script.js?v=<?= time() ?>"></script>
 </body>
+
 </html>

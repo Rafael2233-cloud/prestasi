@@ -40,9 +40,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <li class="menu-item-new <?php echo ($current_page == 'RekapPrestasi.php') ? 'active' : ''; ?>"><a href="RekapPrestasi.php"><i class="fa-solid fa-file-lines"></i> <span class="menu-text">Rekap Prestasi</span></a></li>
             <li class="menu-item-new <?php echo ($current_page == 'Leaderboard.php') ? 'active' : ''; ?>"><a href="Leaderboard.php"><i class="fa-solid fa-trophy"></i> <span class="menu-text">Leaderboard</span></a></li>
             <li class="menu-item-new <?php echo ($current_page == 'PersetujuanPoin.php') ? 'active' : ''; ?>">
-                <?php 
+                <?php
                 $total_poin_pending = 0;
-                if(isset($conn)) {
+                if (isset($conn)) {
                     $q_poin_pending = $conn->query("SELECT COUNT(*) as cnt FROM poin_revisi WHERE status='Menunggu Persetujuan'");
                     $total_poin_pending = $q_poin_pending ? $q_poin_pending->fetch_assoc()['cnt'] : 0;
                 }
@@ -57,3 +57,42 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </div>
 </aside>
 
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggleSidebar'); // Tombol yang ada di sidebar
+        const toggleBtnTopbar = document.getElementById('toggleSidebarTopbar'); // Tombol di topbar (kalau ada)
+
+        // 1. Fungsi Toggle Sidebar
+        const toggleSidebar = (e) => {
+            if (e) e.stopPropagation(); // Mencegah event klik naik ke document
+            if (sidebar) {
+                sidebar.classList.toggle('collapsed');
+            }
+        };
+
+        // 2. Bind langsung ke tombol, BUKAN ke document
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+        if (toggleBtnTopbar) toggleBtnTopbar.addEventListener('click', toggleSidebar);
+
+        // 3. Logic terpisah untuk Dropdown (Biar ga campur aduk sama toggle sidebar)
+        document.addEventListener('click', (e) => {
+            const profileBtn = document.getElementById('profileBtn');
+            const notifBtn = document.getElementById('notifBtn');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const notifDropdown = document.getElementById('notifDropdown');
+
+            if (profileBtn && profileBtn.contains(e.target)) {
+                profileDropdown.classList.toggle('show');
+                if (notifDropdown) notifDropdown.classList.remove('show');
+            } else if (notifBtn && notifBtn.contains(e.target)) {
+                notifDropdown.classList.toggle('show');
+                if (profileDropdown) profileDropdown.classList.remove('show');
+            } else {
+                // Klik di luar, tutup semua
+                if (profileDropdown) profileDropdown.classList.remove('show');
+                if (notifDropdown) notifDropdown.classList.remove('show');
+            }
+        });
+    });
+</script> -->
