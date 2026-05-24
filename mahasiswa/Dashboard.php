@@ -203,7 +203,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                                 <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['prodi']) ?></div>
                             </div>
                         </div>
-                        <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> pts</div>
+                        <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
                     </div>
                     <?php $i++; endwhile; ?>
                 <?php endif; ?>

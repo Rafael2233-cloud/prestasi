@@ -39,7 +39,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <ul class="sidebar-menu-new">
             <li class="menu-item-new <?php echo ($current_page == 'RekapPrestasi.php') ? 'active' : ''; ?>"><a href="RekapPrestasi.php"><i class="fa-solid fa-file-lines"></i> <span class="menu-text">Rekap Prestasi</span></a></li>
             <li class="menu-item-new <?php echo ($current_page == 'Leaderboard.php') ? 'active' : ''; ?>"><a href="Leaderboard.php"><i class="fa-solid fa-trophy"></i> <span class="menu-text">Leaderboard</span></a></li>
-            <li class="menu-item-new <?php echo ($current_page == 'PersetujuanPoin.php') ? 'active' : ''; ?>"><a href="PersetujuanPoin.php"><i class="fa-solid fa-check-to-slot"></i> <span class="menu-text">Persetujuan Poin</span></a></li>
+            <li class="menu-item-new <?php echo ($current_page == 'PersetujuanPoin.php') ? 'active' : ''; ?>">
+                <?php 
+                $total_poin_pending = 0;
+                if(isset($conn)) {
+                    $q_poin_pending = $conn->query("SELECT COUNT(*) as cnt FROM poin_revisi WHERE status='Menunggu Persetujuan'");
+                    $total_poin_pending = $q_poin_pending ? $q_poin_pending->fetch_assoc()['cnt'] : 0;
+                }
+                ?>
+                <a href="PersetujuanPoin.php"><i class="fa-solid fa-check-to-slot"></i> <span class="menu-text">Persetujuan Poin</span><?php if ($total_poin_pending > 0): ?><span class="badge"><?= $total_poin_pending ?></span><?php endif; ?></a>
+            </li>
         </ul>
     </div>
 
@@ -47,5 +56,4 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <a href="logout.php" class="logout-btn-new"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="menu-text">Logout</span></a>
     </div>
 </aside>
-
 

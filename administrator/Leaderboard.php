@@ -9,6 +9,7 @@ date_default_timezone_set('Asia/Jakarta');
 $filter_prodi = isset($_GET['prodi']) ? $_GET['prodi'] : '';
 $filter_angkatan = isset($_GET['angkatan']) ? $_GET['angkatan'] : '';
 $filter_tahun = isset($_GET['tahun']) ? $_GET['tahun'] : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 
 // Build dynamic query to support year filtering
 $base_query = "
@@ -23,7 +24,8 @@ SELECT
             (SELECT pc.poin FROM poin_config pc WHERE (pc.tingkat = p.tingkat OR (p.tingkat = 'Kota/Kabupaten' AND pc.tingkat IN ('Kota','Kabupaten'))) AND pc.juara = p.juara ORDER BY pc.poin DESC LIMIT 1) 
         ELSE 0 END
     ), 0) AS total_poin,
-    COUNT(CASE WHEN p.status = 'approved' THEN 1 END) AS total_prestasi
+    COUNT(CASE WHEN p.status = 'approved' THEN 1 END) AS total_prestasi,
+    GROUP_CONCAT(DISTINCT CASE WHEN p.status = 'approved' THEN p.tahun END ORDER BY p.tahun DESC SEPARATOR ', ') AS tahun_prestasi
 FROM mahasiswa m 
 LEFT JOIN prestasi p ON m.id = p.mahasiswa_id
 ";
@@ -42,6 +44,42 @@ if ($filter_angkatan !== '') {
 
 $query = $base_query . " WHERE " . implode(" AND ", $where_clauses) . " GROUP BY m.id, m.nim, m.nama, m.prodi, m.angkatan ORDER BY total_poin DESC, m.nama ASC";
 
+$q_leaderboard = $conn->query($query);
+$leaderboard_data = [];
+$rank = 1;
+while($row = $q_leaderboard->fetch_assoc()) {
+    $row['rank'] = $rank++;
+    $leaderboard_data[] = $row;
+}
+
+// Fetch dynamic filter lists
+$prodis = [];
+$q_prodi = $conn->query("SELECT DISTINCT prodi FROM mahasiswa WHERE prodi != '' AND prodi IS NOT NULL ORDER BY prodi ASC");
+while($row = $q_prodi->fetch_assoc()) { $prodis[] = $row['prodi']; }
+
+$angkatans = [];
+$q_angkatan = $conn->query("SELECT DISTINCT angkatan FROM mahasiswa WHERE angkatan != '' AND angkatan IS NOT NULL ORDER BY angkatan DESC");
+while($row = $q_angkatan->fetch_assoc()) { $angkatans[] = $row['angkatan']; }
+
+$tahuns = [];
+$q_tahun = $conn->query("SELECT DISTINCT tahun FROM prestasi WHERE tahun != '' AND tahun IS NOT NULL ORDER BY tahun DESC");
+while($row = $q_tahun->fetch_assoc()) { $tahuns[] = $row['tahun']; }
+
+// Ensure we have at least 3 items for the top 3 cards
+$top1 = isset($leaderboard_data[0]) ? $leaderboard_data[0] : null;
+$top2 = isset($leaderboard_data[1]) ? $leaderboard_data[1] : null;
+$top3 = isset($leaderboard_data[2]) ? $leaderboard_data[2] : null;
+
+if ($search !== '') {
+    $filtered_data = [];
+    foreach ($leaderboard_data as $row) {
+        if (stripos($row['nim'], $search) !== false || stripos($row['nama'], $search) !== false) {
+            $filtered_data[] = $row;
+        }
+    }
+    $leaderboard_data = $filtered_data;
+}
+
 // Handle Excel Export (Using HTML Table for perfect Excel column formatting)
 if (isset($_GET['export']) && $_GET['export'] == 'excel') {
     header("Content-Type: application/vnd.ms-excel");
@@ -56,47 +94,24 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
             <th style='background-color:#1e3a8a; color:white;'>Nama Mahasiswa</th>
             <th style='background-color:#1e3a8a; color:white;'>Program Studi</th>
             <th style='background-color:#1e3a8a; color:white;'>Angkatan</th>
+            <th style='background-color:#1e3a8a; color:white;'>Tahun Prestasi</th>
             <th style='background-color:#1e3a8a; color:white;'>Total Poin</th>
           </tr>";
 
-    $q_export = $conn->query($query);
-    $rank = 1;
-    while($row = $q_export->fetch_assoc()) {
+    foreach ($leaderboard_data as $row) {
         echo "<tr>";
-        echo "<td style='text-align:center;'>" . $rank++ . "</td>";
+        echo "<td style='text-align:center;'>" . $row['rank'] . "</td>";
         echo "<td>" . htmlspecialchars($row['nim']) . "</td>";
         echo "<td>" . htmlspecialchars($row['nama']) . "</td>";
         echo "<td>" . htmlspecialchars($row['prodi']) . "</td>";
         echo "<td>" . htmlspecialchars($row['angkatan']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['tahun_prestasi'] ? $row['tahun_prestasi'] : '-') . "</td>";
         echo "<td>" . $row['total_poin'] . "</td>";
         echo "</tr>";
     }
     echo "</table>";
     exit;
 }
-
-$q_leaderboard = $conn->query($query);
-$leaderboard_data = [];
-while($row = $q_leaderboard->fetch_assoc()) {
-    $leaderboard_data[] = $row;
-}
-
-// Hardcoded filter lists exactly as requested
-$prodis = [
-    "Teknik Informatika", 
-    "Sistem Informasi", 
-    "Sistem Komputer", 
-    "Manajemen Informatika", 
-    "Komputerisasi Akuntansi", 
-    "Teknik Komputer"
-];
-$angkatans = ["2022", "2023", "2024", "2025", "2026"];
-$tahuns = ["2024", "2025", "2026"];
-
-// Ensure we have at least 3 items for the top 3 cards
-$top1 = isset($leaderboard_data[0]) ? $leaderboard_data[0] : null;
-$top2 = isset($leaderboard_data[1]) ? $leaderboard_data[1] : null;
-$top3 = isset($leaderboard_data[2]) ? $leaderboard_data[2] : null;
 
 // Get pending count for sidebar badge
 $q_pending = $conn->query("SELECT COUNT(*) as cnt FROM prestasi WHERE status='pending'");
@@ -188,6 +203,8 @@ function getInitials($name) {
         
         .btn-reset { background: #2563eb; color: white; border: none; padding: 0 25px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; white-space: nowrap; height: 45px; }
         .btn-reset:hover { background: #1d4ed8; }
+        .filter-input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 14px; outline: none; transition: border-color 0.2s; background-color: white; box-sizing: border-box; height: 45px; }
+        .filter-input:focus { border-color: #2563eb; }
         
         /* Top 3 Cards */
         .top3-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
@@ -368,6 +385,13 @@ function getInitials($name) {
                         <i class="fa-solid fa-filter"></i> Filter
                     </div>
                     <div class="filter-controls">
+                        <div class="filter-group" style="flex: 2; min-width: 250px;">
+                            <label class="filter-label">Cari NIM / Nama</label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="text" class="filter-input" name="search" id="filterSearch" placeholder="Masukkan NIM atau nama..." value="<?= htmlspecialchars($search) ?>">
+                                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; color: #64748b; font-size: 14px;"></i>
+                            </div>
+                        </div>
                         <div class="filter-group">
                             <label class="filter-label">Program Studi</label>
                             <select class="filter-select" name="prodi" id="filterProdi" onchange="document.getElementById('filterForm').submit()">
@@ -448,7 +472,7 @@ function getInitials($name) {
                 <div class="table-header">
                     <h2>Peringkat Lengkap</h2>
                     <!-- Link calls the PHP export parameter, preserving current filters -->
-                    <a href="Leaderboard.php?export=excel&prodi=<?= urlencode($filter_prodi) ?>&angkatan=<?= urlencode($filter_angkatan) ?>&tahun=<?= urlencode($filter_tahun) ?>" class="btn-export">
+                    <a href="Leaderboard.php?export=excel&prodi=<?= urlencode($filter_prodi) ?>&angkatan=<?= urlencode($filter_angkatan) ?>&tahun=<?= urlencode($filter_tahun) ?>&search=<?= urlencode($search) ?>" class="btn-export">
                         <i class="fa-solid fa-download"></i> Export Excel
                     </a>
                 </div>
@@ -461,36 +485,37 @@ function getInitials($name) {
                                 <th>NAMA MAHASISWA</th>
                                 <th>PROGRAM STUDI</th>
                                 <th>ANGKATAN</th>
+                                <th>TAHUN PRESTASI</th>
                                 <th>TOTAL PRESTASI</th>
                                 <th>TOTAL POIN</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <?php 
-                            $rank = 1;
-                            $anim_idx = 1;
-                            foreach($leaderboard_data as $row): 
-                                $rank_html = '';
-                                if($rank == 1) $rank_html = '<div class="rank-circle rank-1">1</div>';
-                                elseif($rank == 2) $rank_html = '<div class="rank-circle rank-2">2</div>';
-                                elseif($rank == 3) $rank_html = '<div class="rank-circle rank-3">3</div>';
-                                else $rank_html = '<div class="rank-other">'.$rank.'</div>';
-                                
-                                $d_class = 'd-item-' . ($anim_idx <= 10 ? $anim_idx : 10);
-                            ?>
-                            <tr class="table-row item-anim <?= $d_class ?>">
-                                <td><?= $rank_html ?></td>
-                                <td><?= htmlspecialchars($row['nim']) ?></td>
-                                <td class="col-name"><?= htmlspecialchars($row['nama']) ?></td>
-                                <td><?= htmlspecialchars($row['prodi']) ?></td>
-                                <td><?= htmlspecialchars($row['angkatan']) ?></td>
-                                <td><?= $row['total_prestasi'] ?> prestasi</td>
-                                <td class="col-points"><?= $row['total_poin'] ?> poin</td>
-                            </tr>
-                            <?php 
-                                $rank++;
-                                $anim_idx++;
-                            endforeach; 
+                             <?php 
+                             $anim_idx = 1;
+                             foreach($leaderboard_data as $row): 
+                                 $rank_val = $row['rank'];
+                                 $rank_html = '';
+                                 if($rank_val == 1) $rank_html = '<div class="rank-circle rank-1">1</div>';
+                                 elseif($rank_val == 2) $rank_html = '<div class="rank-circle rank-2">2</div>';
+                                 elseif($rank_val == 3) $rank_html = '<div class="rank-circle rank-3">3</div>';
+                                 else $rank_html = '<div class="rank-other">'.$rank_val.'</div>';
+                                 
+                                 $d_class = 'd-item-' . ($anim_idx <= 10 ? $anim_idx : 10);
+                             ?>
+                             <tr class="table-row item-anim <?= $d_class ?>">
+                                 <td><?= $rank_html ?></td>
+                                 <td><?= htmlspecialchars($row['nim']) ?></td>
+                                 <td class="col-name"><?= htmlspecialchars($row['nama']) ?></td>
+                                 <td><?= htmlspecialchars($row['prodi']) ?></td>
+                                 <td><?= htmlspecialchars($row['angkatan']) ?></td>
+                                 <td><?= htmlspecialchars($row['tahun_prestasi'] ? $row['tahun_prestasi'] : '-') ?></td>
+                                 <td><?= $row['total_prestasi'] ?> prestasi</td>
+                                 <td class="col-points"><?= $row['total_poin'] ?> poin</td>
+                             </tr>
+                             <?php 
+                                 $anim_idx++;
+                             endforeach; 
                             if(count($leaderboard_data) == 0):
                             ?>
                             <tr id="emptyRow">

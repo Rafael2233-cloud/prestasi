@@ -122,14 +122,14 @@ while($row = $result->fetch_assoc()) {
                                         <?php if($rev['tipe'] === 'insert'): ?>
                                             <span style="color: #64748b;">-</span>
                                         <?php else: ?>
-                                            <span style="color: #64748b;"><?= $rev['poin_lama'] ?> pts</span>
+                                            <span style="color: #64748b;"><?= $rev['poin_lama'] ?> Poin</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if($rev['tipe'] === 'delete'): ?>
                                             <span style="color: #ef4444; font-weight: 600; text-decoration: line-through;">Dihapus</span>
                                         <?php else: ?>
-                                            <span style="color: #2563eb; font-weight: 700;"><?= $rev['poin_baru'] ?> pts</span>
+                                            <span style="color: #2563eb; font-weight: 700;"><?= $rev['poin_baru'] ?> Poin</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -241,4 +241,3 @@ while($row = $result->fetch_assoc()) {
     </script>
 </body>
 </html>
-

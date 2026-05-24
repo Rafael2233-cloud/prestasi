@@ -419,7 +419,7 @@ $admin_data = $q_admin->fetch_assoc();
                     <div class="form-group" style="margin-bottom: 0;">
                         <label style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px;">Password Baru <span style="color: #ef4444;">*</span></label>
                         <div class="password-wrapper" style="position: relative;">
-                            <input type="password" id="newPassword" class="edit-input" placeholder="Minimal 6 karakter" style="display: block; padding: 12px 15px; padding-right: 40px; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; box-sizing: border-box; background: #f8fafc;">
+                            <input type="password" id="newPassword" class="edit-input" placeholder="Minimal 8 karakter" style="display: block; padding: 12px 15px; padding-right: 40px; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; box-sizing: border-box; background: #f8fafc;">
                             <i class="fa-regular fa-eye toggle-password-settings" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; transition: color 0.2s;"></i>
                         </div>
                     </div>

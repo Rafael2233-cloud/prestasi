@@ -8,6 +8,11 @@ if(isset($conn)) {
 
     $total_notif = $notif_prestasi;
 }
+
+$first_letter = 'A';
+if (isset($_SESSION['admin_nama']) && !empty($_SESSION['admin_nama'])) {
+    $first_letter = strtoupper(substr(trim($_SESSION['admin_nama']), 0, 1));
+}
 ?>
 <!-- Topbar -->
 <header class="topbar-new" style="display: flex; justify-content: space-between; align-items: center;">
@@ -52,7 +57,7 @@ if(isset($conn)) {
         <div style="width: 1px; height: 32px; background-color: #e2e8f0; margin: 0 5px;"></div>
 
         <div class="user-profile-top" id="profileBtn" style="position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-            <div class="avatar" style="background-color: #3b82f6; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;">F</div>
+            <div class="avatar" style="background-color: #3b82f6; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;"><?= $first_letter ?></div>
             <i class="fa-solid fa-chevron-down" style="color: #94a3b8; font-size: 10px; margin-left: 2px;"></i>
             <div class="dropdown-menu" id="profileDropdown" style="z-index: 1000; width: 160px; right: 0; left: auto; margin-top: 10px;">
                 <a href="Biodata.php" class="dropdown-item"><i class="fa-regular fa-user"></i> Data Diri</a>
@@ -69,22 +74,40 @@ if(isset($conn)) {
     if(isDark) document.body.classList.add('dark-mode');
     if(noAnim) document.body.classList.add('no-animations');
     
-    // Setup Notification Toggle (Since Topbar is included globally)
+    // Setup Notification and Profile Dropdown Toggle
     document.addEventListener('DOMContentLoaded', () => {
         const notifBtn = document.getElementById('notifBtn');
         const notifDropdown = document.getElementById('notifDropdown');
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
         
         if(notifBtn && notifDropdown) {
             notifBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 // Close profile dropdown if open
-                const profileDropdown = document.getElementById('profileDropdown');
                 if(profileDropdown && profileDropdown.classList.contains('show')) {
                     profileDropdown.classList.remove('show');
                 }
                 notifDropdown.classList.toggle('show');
             });
         }
+        
+        if(profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Close notification dropdown if open
+                if(notifDropdown && notifDropdown.classList.contains('show')) {
+                    notifDropdown.classList.remove('show');
+                }
+                profileDropdown.classList.toggle('show');
+            });
+        }
+        
+        // Close dropdowns on clicking outside
+        document.addEventListener('click', () => {
+            if(notifDropdown) notifDropdown.classList.remove('show');
+            if(profileDropdown) profileDropdown.classList.remove('show');
+        });
     });
 })();
 </script>

@@ -453,7 +453,7 @@ $prestasi_menunggu = $q_pending->fetch_assoc()['cnt'];
                     <div class="info-group">
                         <div class="info-label" style="color: #10b981;"><i class="fa-solid fa-check-circle"></i> Catatan Admin</div>
                         <div class="info-value" style="background: #f0fdf4; border-color: #86efac; color: #166534;">
-                            Data prestasi valid dan poin (<?= $prestasi['poin'] ?> pts) telah ditambahkan ke sistem.
+                            Data prestasi valid dan poin (<?= $prestasi['poin'] ?> Poin) telah ditambahkan ke sistem.
                         </div>
                     </div>
                     <?php endif; ?>

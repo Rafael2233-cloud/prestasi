@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Validasi session, misal hanya untuk yang sudah login
+// Validasi session
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: index.php');
     exit;
@@ -9,43 +9,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 require '../koneksi.php';
 
-function time_elapsed_string($datetime) {
-    $now = new DateTime;
-    $ago = new DateTime($datetime);
-    $diff = $now->diff($ago);
-    if ($diff->d > 0) return $diff->d . ' hari lalu';
-    if ($diff->h > 0) return $diff->h . ' jam lalu';
-    if ($diff->i > 0) return $diff->i . ' menit lalu';
-    return 'Baru saja'; 
-}
-
-// Aktivitas Terbaru 
-$activities = [];
+// Get year filter
 $filter_tahun = isset($_GET['tahun']) ? $_GET['tahun'] : '';
-$tahun_condition = $filter_tahun !== '' ? " AND p.tahun = '" . $conn->real_escape_string($filter_tahun) . "'" : "";
-$q_pres_act = $conn->query("SELECT p.status, p.updated_at as waktu, m.nama, p.judul as keterangan FROM prestasi p JOIN mahasiswa m ON p.mahasiswa_id = m.id WHERE 1=1 $tahun_condition ORDER BY p.updated_at DESC LIMIT 5");
-if ($q_pres_act) {
-    while($r = $q_pres_act->fetch_assoc()){
-        if($r['status'] == 'approved') {
-            $icon = '<div class="act-icon-small bg-green"><i class="fa-solid fa-check"></i></div>';
-            $ket = 'Prestasi "'.htmlspecialchars($r['keterangan']).'" diverifikasi oleh Admin';
-        } elseif($r['status'] == 'rejected') {
-            $icon = '<div class="act-icon-small bg-red"><i class="fa-solid fa-xmark"></i></div>';
-            $ket = 'Prestasi "'.htmlspecialchars($r['keterangan']).'" ditolak oleh Admin';
-        } else {
-            $icon = '<div class="act-icon-small bg-blue"><i class="fa-solid fa-user"></i></div>';
-            $ket = 'Mahasiswa '.htmlspecialchars($r['nama']) . ' menambahkan prestasi baru';
-        }
-        $activities[] = ['waktu' => $r['waktu'], 'keterangan' => $ket, 'icon' => $icon];
-    }
-}
-usort($activities, function($a, $b) { return strtotime($b['waktu']) - strtotime($a['waktu']); });
-$activities = array_slice($activities, 0, 5);
+$tahun_condition = $filter_tahun !== '' ? " AND tahun = '" . $conn->real_escape_string($filter_tahun) . "'" : "";
 
-$prestasi_total = $conn->query("SELECT COUNT(*) as c FROM prestasi")->fetch_assoc()['c'] ?? 0;
-$prestasi_terverifikasi = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='approved'")->fetch_assoc()['c'] ?? 0;
-$prestasi_menunggu = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='pending'")->fetch_assoc()['c'] ?? 0;
-$prestasi_ditolak = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='rejected'")->fetch_assoc()['c'] ?? 0;
+// Stats Prestasi (Approved achievements, matching Rekap Prestasi menu)
+$prestasi_approved_total = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='approved' $tahun_condition")->fetch_assoc()['c'] ?? 0;
+
+// Stats Persetujuan Poin (Point Config Revisions, matching Persetujuan Poin menu)
+$poin_disetujui = $conn->query("SELECT COUNT(*) as c FROM poin_revisi WHERE status='Disetujui'")->fetch_assoc()['c'] ?? 0;
+$poin_menunggu = $conn->query("SELECT COUNT(*) as c FROM poin_revisi WHERE status='Menunggu Persetujuan'")->fetch_assoc()['c'] ?? 0;
+$poin_ditolak = $conn->query("SELECT COUNT(*) as c FROM poin_revisi WHERE status='Ditolak'")->fetch_assoc()['c'] ?? 0;
 
 date_default_timezone_set('Asia/Jakarta');
 $bulan_full = array(1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
@@ -54,7 +28,12 @@ $nama_hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 $tanggal_hari_ini = $nama_hari[$hari_ini] . ', ' . date('d') . ' ' . $bulan_full[(int)date('m')] . ' ' . date('Y');
 $jam_hari_ini = date('H:i') . ' WIB';
 
-// Leaderboard Top 5
+// Leaderboard Top 5 (Filtered by Year if selected)
+$lb_join_condition = "ON m.id = p.mahasiswa_id";
+if ($filter_tahun !== '') {
+    $lb_join_condition .= " AND p.tahun = '" . $conn->real_escape_string($filter_tahun) . "'";
+}
+
 $q_leaderboard = $conn->query("
     SELECT m.nama, m.id, m.prodi, m.angkatan,
         COALESCE(SUM(
@@ -64,7 +43,7 @@ $q_leaderboard = $conn->query("
         ), 0) AS total_poin,
         COUNT(CASE WHEN p.status = 'approved' THEN 1 END) AS total_prestasi
     FROM mahasiswa m 
-    LEFT JOIN prestasi p ON m.id = p.mahasiswa_id
+    LEFT JOIN prestasi p $lb_join_condition
     GROUP BY m.id, m.nama, m.prodi, m.angkatan
     ORDER BY total_poin DESC, m.nama ASC LIMIT 5
 ");
@@ -76,7 +55,6 @@ if ($q_leaderboard) {
 }
 
 // Chart Data (Perkembangan Prestasi Mahasiswa per Tahun)
-$filter_tahun = isset($_GET['tahun']) ? $_GET['tahun'] : '';
 $tahuns_chart = [2024, 2025, 2026];
 if ($filter_tahun !== '') {
     $tahuns_chart = [(int)$filter_tahun];
@@ -215,7 +193,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
 </head>
 <body class="dashboard-body new-dashboard">
 
-    <!-- Main Content -->
+    <!-- Sidebar -->
     <?php include 'LayoutSidebar.php'; ?>
     <main class="main-content-new" id="mainContent">
         <?php include 'Topbar.php'; ?>
@@ -240,38 +218,38 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
 
             <!-- Top Stats Grid -->
             <div class="top-stats-wrap animate-slide-up d-1">
-                <div class="section-title"><i class="fa-solid fa-award"></i> Ringkasan Prestasi</div>
+                <div class="section-title"><i class="fa-solid fa-award"></i> Ringkasan Prestasi & Persetujuan</div>
                 <div class="stats-grid-4">
                     <div class="stat-card-new sc-blue">
                         <div class="sc-icon bg-light-blue"><i class="fa-solid fa-trophy"></i></div>
                         <div class="sc-info">
                             <div class="sc-title">Total Prestasi</div>
-                            <div class="sc-val count-up" data-value="<?= $prestasi_total ?>">0</div>
+                            <div class="sc-val count-up" data-value="<?= $prestasi_approved_total ?>">0</div>
                             <div class="sc-sub">Semua Waktu</div>
                         </div>
                     </div>
                     <div class="stat-card-new sc-green">
                         <div class="sc-icon bg-light-green"><i class="fa-solid fa-circle-check"></i></div>
                         <div class="sc-info">
-                            <div class="sc-title">Prestasi Diverifikasi</div>
-                            <div class="sc-val count-up" data-value="<?= $prestasi_terverifikasi ?>">0</div>
-                            <div class="sc-sub"><?= $prestasi_terverifikasi ?> Prestasi</div>
+                            <div class="sc-title">Poin Disetujui</div>
+                            <div class="sc-val count-up" data-value="<?= $poin_disetujui ?>">0</div>
+                            <div class="sc-sub"><?= $poin_disetujui ?> Perubahan</div>
                         </div>
                     </div>
                     <div class="stat-card-new sc-orange">
                         <div class="sc-icon bg-light-orange"><i class="fa-regular fa-clock"></i></div>
                         <div class="sc-info">
-                            <div class="sc-title">Menunggu Verifikasi</div>
-                            <div class="sc-val count-up" data-value="<?= $prestasi_menunggu ?>">0</div>
-                            <div class="sc-sub"><?= $prestasi_menunggu ?> Prestasi</div>
+                            <div class="sc-title">Menunggu Persetujuan</div>
+                            <div class="sc-val count-up" data-value="<?= $poin_menunggu ?>">0</div>
+                            <div class="sc-sub"><?= $poin_menunggu ?> Pengajuan</div>
                         </div>
                     </div>
                     <div class="stat-card-new sc-red">
                         <div class="sc-icon bg-light-red"><i class="fa-solid fa-circle-xmark"></i></div>
                         <div class="sc-info">
-                            <div class="sc-title">Prestasi Ditolak</div>
-                            <div class="sc-val count-up" data-value="<?= $prestasi_ditolak ?>">0</div>
-                            <div class="sc-sub"><?= $prestasi_ditolak ?> Prestasi</div>
+                            <div class="sc-title">Persetujuan Ditolak</div>
+                            <div class="sc-val count-up" data-value="<?= $poin_ditolak ?>">0</div>
+                            <div class="sc-sub"><?= $poin_ditolak ?> Pengajuan</div>
                         </div>
                     </div>
                 </div>
@@ -294,16 +272,22 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                             foreach($leaderboard_data as $lb): 
                                 $av = $avatar_classes[$i % count($avatar_classes)];
                                 $initials = getInitialsNew($lb['nama']);
+                                $av_bg = '';
+                                if($av == 'av-orange') $av_bg = 'background: #f59e0b;';
+                                if($av == 'av-purple') $av_bg = 'background: #8b5cf6;';
+                                if($av == 'av-blue') $av_bg = 'background: #3b82f6;';
+                                if($av == 'av-cyan') $av_bg = 'background: #06b6d4;';
+                                if($av == 'av-pink') $av_bg = 'background: #ec4899;';
                             ?>
-                            <div class="ts-item">
-                                <div class="ts-left">
-                                    <div class="ts-avatar <?= $av ?>"><?= $initials ?></div>
+                            <div class="ts-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                                <div class="ts-left" style="display: flex; align-items: center; gap: 12px;">
+                                    <div class="ts-avatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; <?= $av_bg ?>"><?= $initials ?></div>
                                     <div>
-                                        <div class="ts-name"><?= htmlspecialchars($lb['nama']) ?></div>
+                                        <div class="ts-name" style="font-size: 12px; font-weight: 700; color: #0f172a;"><?= htmlspecialchars($lb['nama']) ?></div>
                                         <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['prodi']) ?></div>
                                     </div>
                                 </div>
-                                <div class="ts-points"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> pts</div>
+                                <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
                             </div>
                             <?php $i++; endforeach; ?>
                         <?php endif; ?>
@@ -351,14 +335,6 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                 };
                 window.requestAnimationFrame(step);
             });
-
-            const toggleSidebar = document.getElementById('toggleSidebar');
-            const sidebar = document.getElementById('sidebar');
-            if (toggleSidebar && sidebar) {
-                toggleSidebar.addEventListener('click', () => {
-                    sidebar.classList.toggle('collapsed');
-                });
-            }
 
             const ctx = document.getElementById('perkembanganChart');
             if (ctx) {
@@ -463,6 +439,6 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
             }
         });
     </script>
+    <script src="../administrator/Assets/Js/Script.js?v=<?= time() ?>"></script>
 </body>
 </html>
-

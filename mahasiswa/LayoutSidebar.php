@@ -74,23 +74,28 @@ function is_active_new($page, $current) {
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const sidebar = document.getElementById('sidebar');
         const toggleSidebar = document.getElementById('toggleSidebar');
-        const toggleSidebarTopbar = document.getElementById('toggleSidebarTopbar'); // Ngambil hamburger menu dari topbar mobile
+        const toggleSidebarTopbar = document.getElementById('toggleSidebarTopbar');
+        const sidebar = document.getElementById('sidebar');
+        
+        const toggleFn = () => {
+            if (sidebar) sidebar.classList.toggle('collapsed');
+        };
 
-        // 1. Jalur Desktop: Tombol toggle yang ada di dalem sidebar
-        if (toggleSidebar && sidebar) {
-            toggleSidebar.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-            });
-        }
+        if (toggleSidebar) toggleSidebar.addEventListener('click', toggleFn);
+        if (toggleSidebarTopbar) toggleSidebarTopbar.addEventListener('click', toggleFn);
 
-        // 2. Jalur Mobile: Tombol hamburger yang ada di topbar luar (LayoutHeader.php)
-        if (toggleSidebarTopbar && sidebar) {
-            toggleSidebarTopbar.addEventListener('click', (e) => {
-                e.stopPropagation(); // Biar event click-nya gak tabrakan/memicu document click
-                sidebar.classList.toggle('collapsed');
-            });
+        // Responsive behavior: Automatically collapse sidebar on smaller screens
+        if (sidebar) {
+            const handleResize = () => {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.add('collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                }
+            };
+            handleResize(); // Call once on load
+            window.addEventListener('resize', handleResize);
         }
     });
 </script>

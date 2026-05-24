@@ -4,6 +4,7 @@ include 'LayoutHeader.php';
 $filter_prodi = isset($_GET['prodi']) ? $_GET['prodi'] : '';
 $filter_angkatan = isset($_GET['angkatan']) ? $_GET['angkatan'] : '';
 $filter_tahun = isset($_GET['tahun']) ? $_GET['tahun'] : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 
 $base_query = "
 SELECT 
@@ -17,7 +18,8 @@ SELECT
             (SELECT pc.poin FROM poin_config pc WHERE (pc.tingkat = p.tingkat OR (p.tingkat = 'Kota/Kabupaten' AND pc.tingkat IN ('Kota','Kabupaten'))) AND pc.juara = p.juara ORDER BY pc.poin DESC LIMIT 1) 
         ELSE 0 END
     ), 0) AS total_poin,
-    COUNT(CASE WHEN p.status = 'approved' THEN 1 END) AS total_prestasi
+    COUNT(CASE WHEN p.status = 'approved' THEN 1 END) AS total_prestasi,
+    GROUP_CONCAT(DISTINCT CASE WHEN p.status = 'approved' THEN p.tahun END ORDER BY p.tahun DESC SEPARATOR ', ') AS tahun_prestasi
 FROM mahasiswa m 
 LEFT JOIN prestasi p ON m.id = p.mahasiswa_id
 ";
@@ -38,24 +40,37 @@ $query = $base_query . " WHERE " . implode(" AND ", $where_clauses) . " GROUP BY
 
 $q_leaderboard = mysqli_query($conn, $query);
 $leaderboard_data = [];
+$rank = 1;
 while($row = mysqli_fetch_assoc($q_leaderboard)) {
+    $row['rank'] = $rank++;
     $leaderboard_data[] = $row;
 }
 
-$prodis = [
-    "Teknik Informatika", 
-    "Sistem Informasi", 
-    "Sistem Komputer", 
-    "Manajemen Informatika", 
-    "Komputerisasi Akuntansi", 
-    "Teknik Komputer"
-];
-$angkatans = ["2022", "2023", "2024", "2025", "2026"];
-$tahuns = ["2024", "2025", "2026"];
+$prodis = [];
+$q_prodi = mysqli_query($conn, "SELECT DISTINCT prodi FROM mahasiswa WHERE prodi != '' AND prodi IS NOT NULL ORDER BY prodi ASC");
+while($row = mysqli_fetch_assoc($q_prodi)) { $prodis[] = $row['prodi']; }
+
+$angkatans = [];
+$q_angkatan = mysqli_query($conn, "SELECT DISTINCT angkatan FROM mahasiswa WHERE angkatan != '' AND angkatan IS NOT NULL ORDER BY angkatan DESC");
+while($row = mysqli_fetch_assoc($q_angkatan)) { $angkatans[] = $row['angkatan']; }
+
+$tahuns = [];
+$q_tahun = mysqli_query($conn, "SELECT DISTINCT tahun FROM prestasi WHERE tahun != '' AND tahun IS NOT NULL ORDER BY tahun DESC");
+while($row = mysqli_fetch_assoc($q_tahun)) { $tahuns[] = $row['tahun']; }
 
 $top1 = isset($leaderboard_data[0]) ? $leaderboard_data[0] : null;
 $top2 = isset($leaderboard_data[1]) ? $leaderboard_data[1] : null;
 $top3 = isset($leaderboard_data[2]) ? $leaderboard_data[2] : null;
+
+if ($search !== '') {
+    $filtered_data = [];
+    foreach ($leaderboard_data as $row) {
+        if (stripos($row['nim'], $search) !== false || stripos($row['nama'], $search) !== false) {
+            $filtered_data[] = $row;
+        }
+    }
+    $leaderboard_data = $filtered_data;
+}
 
 function getInitials($name) {
     if (!$name) return '-';
@@ -94,6 +109,8 @@ function getInitials($name) {
     .filter-select:focus { border-color: #2563eb; }
     .btn-reset { background: #2563eb; color: white; border: none; padding: 0 25px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; white-space: nowrap; height: 45px; text-decoration: none; }
     .btn-reset:hover { background: #1d4ed8; text-decoration: none; color: white; }
+    .filter-input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 14px; outline: none; transition: border-color 0.2s; background-color: white; box-sizing: border-box; height: 45px; }
+    .filter-input:focus { border-color: #2563eb; }
     
     .top3-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
     .top-card { position: relative; border-radius: 12px; padding: 35px 20px 25px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; background: white; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -177,6 +194,13 @@ function getInitials($name) {
                 <i class="fa-solid fa-filter"></i> Filter
             </div>
             <div class="filter-controls">
+                <div class="filter-group" style="flex: 2; min-width: 250px;">
+                    <label class="filter-label">Cari NIM / Nama</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="text" class="filter-input" name="search" id="filterSearch" placeholder="Masukkan NIM atau nama..." value="<?= htmlspecialchars($search) ?>">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; color: #64748b; font-size: 14px;"></i>
+                    </div>
+                </div>
                 <div class="filter-group">
                     <label class="filter-label">Program Studi</label>
                     <select class="filter-select" name="prodi" id="filterProdi" onchange="document.getElementById('filterForm').submit()">
@@ -259,20 +283,21 @@ function getInitials($name) {
                         <th>NAMA MAHASISWA</th>
                         <th>PROGRAM STUDI</th>
                         <th>ANGKATAN</th>
+                        <th>TAHUN PRESTASI</th>
                         <th>TOTAL PRESTASI</th>
                         <th>TOTAL POIN</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     <?php 
-                    $rank = 1;
                     $anim_idx = 1;
                     foreach($leaderboard_data as $row): 
+                        $rank_val = $row['rank'];
                         $rank_html = '';
-                        if($rank == 1) $rank_html = '<div class="rank-circle rank-1">1</div>';
-                        elseif($rank == 2) $rank_html = '<div class="rank-circle rank-2">2</div>';
-                        elseif($rank == 3) $rank_html = '<div class="rank-circle rank-3">3</div>';
-                        else $rank_html = '<div class="rank-other">'.$rank.'</div>';
+                        if($rank_val == 1) $rank_html = '<div class="rank-circle rank-1">1</div>';
+                        elseif($rank_val == 2) $rank_html = '<div class="rank-circle rank-2">2</div>';
+                        elseif($rank_val == 3) $rank_html = '<div class="rank-circle rank-3">3</div>';
+                        else $rank_html = '<div class="rank-other">'.$rank_val.'</div>';
                         
                         $d_class = 'd-item-' . ($anim_idx <= 10 ? $anim_idx : 10);
                         
@@ -291,11 +316,11 @@ function getInitials($name) {
                         </td>
                         <td><?= htmlspecialchars($row['prodi']) ?></td>
                         <td><?= htmlspecialchars($row['angkatan']) ?></td>
+                        <td><?= htmlspecialchars($row['tahun_prestasi'] ? $row['tahun_prestasi'] : '-') ?></td>
                         <td><?= $row['total_prestasi'] ?> prestasi</td>
                         <td class="col-points"><?= $row['total_poin'] ?> poin</td>
                     </tr>
                     <?php 
-                        $rank++;
                         $anim_idx++;
                     endforeach; 
                     if(count($leaderboard_data) == 0):

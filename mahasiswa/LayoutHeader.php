@@ -66,7 +66,7 @@ $unread_count = mysqli_num_rows($notif_result);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../administrator/Assets/Css/Style.css?v=<?= time() ?>">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/Style.css">
+    <link rel="stylesheet" href="assets/css/Style.css?v=<?= time() ?>">
     <style>
         .dropdown-menu-custom {
             display: none;
@@ -84,7 +84,7 @@ $unread_count = mysqli_num_rows($notif_result);
         
         <!-- Top Navigation / Notification Bar -->
         <header class="topbar-new" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background-color: #ffffff; border-bottom: 1px solid #e0e0e0; min-height: 60px;">
-            <button class="toggle-btn-new topbar-toggle-btn" id="toggleSidebarTopbar" style="display:none;">
+            <button class="toggle-btn-new topbar-toggle-btn" id="toggleSidebarTopbar">
                 <i class="fa-solid fa-bars"></i>
             </button>
             <div class="topbar-right" style="display: flex; align-items: center; gap: 20px; margin-left: auto;">

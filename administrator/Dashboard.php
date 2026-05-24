@@ -7,11 +7,11 @@ require '../koneksi.php';
 $filter_tahun = isset($_GET['tahun']) ? $_GET['tahun'] : '';
 $tahun_condition = $filter_tahun !== '' ? " AND tahun = '" . $conn->real_escape_string($filter_tahun) . "'" : "";
 
-// Stats Prestasi
-$prestasi_total = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE 1=1 $tahun_condition")->fetch_assoc()['c'] ?? 0;
+// Stats Prestasi & Sistem (Synchronized with Sidebar Menus)
+$total_mahasiswa = $conn->query("SELECT COUNT(*) as c FROM mahasiswa WHERE status_akun='aktif'")->fetch_assoc()['c'] ?? 0;
 $prestasi_terverifikasi = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='approved' $tahun_condition")->fetch_assoc()['c'] ?? 0;
 $prestasi_menunggu = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='pending' $tahun_condition")->fetch_assoc()['c'] ?? 0;
-$prestasi_ditolak = $conn->query("SELECT COUNT(*) as c FROM prestasi WHERE status='rejected' $tahun_condition")->fetch_assoc()['c'] ?? 0;
+$poin_pending = $conn->query("SELECT COUNT(*) as c FROM poin_revisi WHERE status='Menunggu Persetujuan'")->fetch_assoc()['c'] ?? 0;
 
 
 
@@ -382,22 +382,22 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
 
             <!-- Top Stats Grid -->
             <div class="top-stats-wrap animate-slide-up d-1" style="display: flex; gap: 20px; margin-bottom: 25px; flex-direction: column;">
-                <div class="section-title" style="font-size: 13px; font-weight: 700; color: #2563eb; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><i class="fa-solid fa-award"></i> Ringkasan Prestasi</div>
+                <div class="section-title" style="font-size: 13px; font-weight: 700; color: #2563eb; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><i class="fa-solid fa-award"></i> Ringkasan Sistem & Manajemen</div>
                 <div class="stats-grid-4" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
                     <div class="stat-card-new sc-blue" style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; transition: all 0.2s ease; position: relative; overflow: hidden;">
                         <div style="position: absolute; left: 0; top: 0; width: 3px; height: 100%; background-color: #3b82f6;"></div>
-                        <div class="sc-icon bg-light-blue" style="width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; background: #eff6ff; color: #3b82f6;"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="sc-icon bg-light-blue" style="width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; background: #eff6ff; color: #3b82f6;"><i class="fa-solid fa-users"></i></div>
                         <div class="sc-info" style="display: flex; flex-direction: column; width: 100%; justify-content: center;">
-                            <div class="sc-title" style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase;">Total Prestasi</div>
-                            <div class="sc-val count-up" data-value="<?= $prestasi_total ?>" style="font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px;">0</div>
-                            <div class="sc-sub" style="font-size: 11px; color: #94a3b8; font-weight: 500;">Semua Waktu</div>
+                            <div class="sc-title" style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase;">Total Mahasiswa</div>
+                            <div class="sc-val count-up" data-value="<?= $total_mahasiswa ?>" style="font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px;">0</div>
+                            <div class="sc-sub" style="font-size: 11px; color: #94a3b8; font-weight: 500;">Mahasiswa Aktif</div>
                         </div>
                     </div>
                     <div class="stat-card-new sc-green" style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; transition: all 0.2s ease; position: relative; overflow: hidden;">
                         <div style="position: absolute; left: 0; top: 0; width: 3px; height: 100%; background-color: #10b981;"></div>
                         <div class="sc-icon bg-light-green" style="width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; background: #ecfdf5; color: #10b981;"><i class="fa-solid fa-circle-check"></i></div>
                         <div class="sc-info" style="display: flex; flex-direction: column; width: 100%; justify-content: center;">
-                            <div class="sc-title" style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase;">Prestasi Diverifikasi</div>
+                            <div class="sc-title" style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase;">Prestasi Disetujui</div>
                             <div class="sc-val count-up" data-value="<?= $prestasi_terverifikasi ?>" style="font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px;">0</div>
                             <div class="sc-sub" style="font-size: 11px; color: #94a3b8; font-weight: 500;"><?= $prestasi_terverifikasi ?> Prestasi</div>
                         </div>
@@ -413,11 +413,11 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                     </div>
                     <div class="stat-card-new sc-red" style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; transition: all 0.2s ease; position: relative; overflow: hidden;">
                         <div style="position: absolute; left: 0; top: 0; width: 3px; height: 100%; background-color: #ef4444;"></div>
-                        <div class="sc-icon bg-light-red" style="width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; background: #fef2f2; color: #ef4444;"><i class="fa-solid fa-circle-xmark"></i></div>
+                        <div class="sc-icon bg-light-red" style="width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; background: #fef2f2; color: #ef4444;"><i class="fa-solid fa-gear"></i></div>
                         <div class="sc-info" style="display: flex; flex-direction: column; width: 100%; justify-content: center;">
-                            <div class="sc-title" style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase;">Prestasi Ditolak</div>
-                            <div class="sc-val count-up" data-value="<?= $prestasi_ditolak ?>" style="font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px;">0</div>
-                            <div class="sc-sub" style="font-size: 11px; color: #94a3b8; font-weight: 500;"><?= $prestasi_ditolak ?> Prestasi</div>
+                            <div class="sc-title" style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase;">Usulan Poin Pending</div>
+                            <div class="sc-val count-up" data-value="<?= $poin_pending ?>" style="font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px;">0</div>
+                            <div class="sc-sub" style="font-size: 11px; color: #94a3b8; font-weight: 500;"><?= $poin_pending ?> Pengajuan</div>
                         </div>
                     </div>
                 </div>
@@ -471,7 +471,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                                         <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['total_prestasi'] ?? '0') ?> Prestasi</div>
                                     </div>
                                 </div>
-                                <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> pts</div>
+                                <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
                             </div>
                             <?php $i++; endforeach; ?>
                         <?php endif; ?>

@@ -221,7 +221,7 @@ $level_icons = [
                         <i class="fa-solid <?= $medal_class ?> juara-icon <?= $medal_color ?>"></i>
                         <?= htmlspecialchars($aturan['juara']) ?>
                     </div>
-                    <div class="poin-badge"><?= $aturan['poin'] ?> pts</div>
+                    <div class="poin-badge"><?= $aturan['poin'] ?> Poin</div>
                 </div>
                 <?php endforeach; ?>
             </div>

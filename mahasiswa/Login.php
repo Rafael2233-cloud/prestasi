@@ -19,8 +19,9 @@ if (isset($_POST['login'])) {
     $username = mysqli_real_escape_string($conn, $_POST['username']);
     $password = $_POST['password'];
     
-    // Query user dari database
-    $query = "SELECT u.*, m.* 
+    // Query user dari database dengan kolom eksplisit untuk menghindari konflik nama kolom
+    $query = "SELECT u.id AS u_id, u.username, u.password, u.role, 
+                     m.id AS m_id, m.nama, m.nim
               FROM users u 
               LEFT JOIN mahasiswa m ON u.id = m.user_id 
               WHERE u.username = '$username' AND u.role = 'mahasiswa'";
@@ -32,12 +33,12 @@ if (isset($_POST['login'])) {
         
         // Verifikasi password (MD5 untuk dummy)
         if (md5($password) === $user['password']) {
-            // Set session
-            $_SESSION['user_id'] = $user['user_id'];
+            // Set session secara aman menggunakan kolom ber-alias
+            $_SESSION['user_id'] = $user['u_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['nama'] = $user['nama'];
             $_SESSION['nim'] = $user['nim'];
-            $_SESSION['mahasiswa_id'] = $user['id'];
+            $_SESSION['mahasiswa_id'] = $user['m_id'];
             
             header("Location: Dashboard.php");
             exit();

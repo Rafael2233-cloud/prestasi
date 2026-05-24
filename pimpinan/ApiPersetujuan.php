@@ -34,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Update revisi row with new config id
                 $conn->query("UPDATE poin_revisi SET poin_config_id = $new_id WHERE id = $revisi_id");
             } elseif ($revisi['tipe'] === 'update') {
-                $stmt = $conn->prepare("UPDATE poin_config SET poin = ? WHERE id = ?");
-                $stmt->bind_param("ii", $revisi['poin_baru'], $revisi['poin_config_id']);
+                $stmt = $conn->prepare("UPDATE poin_config SET tingkat = ?, juara = ?, poin = ? WHERE id = ?");
+                $stmt->bind_param("ssii", $revisi['tingkat'], $revisi['juara'], $revisi['poin_baru'], $revisi['poin_config_id']);
                 $stmt->execute();
             } elseif ($revisi['tipe'] === 'delete') {
                 $stmt = $conn->prepare("DELETE FROM poin_config WHERE id = ?");

@@ -15,10 +15,11 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_prodi = isset($_GET['prodi']) ? $_GET['prodi'] : '';
 $filter_tingkat = isset($_GET['tingkat']) ? $_GET['tingkat'] : '';
 $filter_tahun = isset($_GET['tahun']) ? $_GET['tahun'] : '';
+$filter_angkatan = isset($_GET['angkatan']) ? $_GET['angkatan'] : '';
 
 // Base query
 $query = "
-    SELECT p.id, m.nim, m.nama, m.prodi, p.judul AS nama_prestasi, p.kategori, p.tingkat, p.juara, p.created_at AS tanggal, p.tahun, p.status,
+    SELECT p.id, m.nim, m.nama, m.prodi, m.angkatan, p.judul AS nama_prestasi, p.kategori, p.tingkat, p.juara, p.created_at AS tanggal, p.tahun, p.status,
     (SELECT pc.poin FROM poin_config pc WHERE (pc.tingkat = p.tingkat OR (p.tingkat = 'Kota/Kabupaten' AND pc.tingkat IN ('Kota','Kabupaten'))) AND pc.juara = p.juara ORDER BY pc.poin DESC LIMIT 1) AS poin
     FROM prestasi p
     JOIN mahasiswa m ON p.mahasiswa_id = m.id
@@ -37,6 +38,9 @@ if ($filter_tingkat !== '') {
 if ($filter_tahun !== '') {
     $query .= " AND p.tahun = '" . $conn->real_escape_string($filter_tahun) . "'";
 }
+if ($filter_angkatan !== '') {
+    $query .= " AND m.angkatan = '" . $conn->real_escape_string($filter_angkatan) . "'";
+}
 
 $query .= " ORDER BY p.created_at DESC, m.nama ASC";
 
@@ -53,11 +57,12 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
             <th style='background-color:#1e3a8a; color:white;'>NIM</th>
             <th style='background-color:#1e3a8a; color:white;'>Nama Mahasiswa</th>
             <th style='background-color:#1e3a8a; color:white;'>Program Studi</th>
+            <th style='background-color:#1e3a8a; color:white;'>Angkatan</th>
             <th style='background-color:#1e3a8a; color:white;'>Nama Prestasi</th>
             <th style='background-color:#1e3a8a; color:white;'>Kategori</th>
             <th style='background-color:#1e3a8a; color:white;'>Tingkat</th>
             <th style='background-color:#1e3a8a; color:white;'>Juara</th>
-            <th style='background-color:#1e3a8a; color:white;'>Tahun</th>
+            <th style='background-color:#1e3a8a; color:white;'>Tahun Prestasi</th>
             <th style='background-color:#1e3a8a; color:white;'>Poin</th>
           </tr>";
 
@@ -69,6 +74,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         echo "<td>" . htmlspecialchars($row['nim']) . "</td>";
         echo "<td>" . htmlspecialchars($row['nama']) . "</td>";
         echo "<td>" . htmlspecialchars($row['prodi']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['angkatan']) . "</td>";
         echo "<td>" . htmlspecialchars($row['nama_prestasi']) . "</td>";
         echo "<td>" . htmlspecialchars($row['kategori']) . "</td>";
         echo "<td>" . htmlspecialchars($row['tingkat']) . "</td>";
@@ -87,16 +93,19 @@ while($row = $result->fetch_assoc()) {
     $prestasi_data[] = $row;
 }
 
-$prodis = [
-    "Teknik Informatika", 
-    "Sistem Informasi", 
-    "Sistem Komputer", 
-    "Manajemen Informatika", 
-    "Komputerisasi Akuntansi", 
-    "Teknik Komputer"
-];
+$prodis = [];
+$q_prodi = $conn->query("SELECT DISTINCT prodi FROM mahasiswa WHERE prodi != '' AND prodi IS NOT NULL ORDER BY prodi ASC");
+while($row = $q_prodi->fetch_assoc()) { $prodis[] = $row['prodi']; }
+
+$angkatans = [];
+$q_angkatan = $conn->query("SELECT DISTINCT angkatan FROM mahasiswa WHERE angkatan != '' AND angkatan IS NOT NULL ORDER BY angkatan DESC");
+while($row = $q_angkatan->fetch_assoc()) { $angkatans[] = $row['angkatan']; }
+
+$tahuns = [];
+$q_tahun = $conn->query("SELECT DISTINCT tahun FROM prestasi WHERE tahun != '' AND tahun IS NOT NULL ORDER BY tahun DESC");
+while($row = $q_tahun->fetch_assoc()) { $tahuns[] = $row['tahun']; }
+
 $tingkats = ["Internasional", "Nasional", "Provinsi", "Kota/Kabupaten", "Kecamatan", "Sekolah", "Universitas", "Fakultas", "Program Studi"];
-$tahuns = ["2024", "2025", "2026"];
 
 function getInitials($name) {
     if (!$name) return '-';
@@ -210,7 +219,7 @@ function getInitials($name) {
                         <div class="filter-header-title"><i class="fa-solid fa-filter"></i> Filter Pencarian</div>
                         <div class="export-actions">
                             <!-- BUTTONS MATCHING THE UPLOADED IMAGE -->
-                            <a href="RekapPrestasi.php?export=excel&search=<?= urlencode($search) ?>&prodi=<?= urlencode($filter_prodi) ?>&tingkat=<?= urlencode($filter_tingkat) ?>&tahun=<?= urlencode($filter_tahun) ?>" class="btn-export-excel">
+                            <a href="RekapPrestasi.php?export=excel&search=<?= urlencode($search) ?>&prodi=<?= urlencode($filter_prodi) ?>&angkatan=<?= urlencode($filter_angkatan) ?>&tingkat=<?= urlencode($filter_tingkat) ?>&tahun=<?= urlencode($filter_tahun) ?>" class="btn-export-excel">
                                 <i class="fa-regular fa-file-excel"></i> Export Excel
                             </a>
                             <button type="button" class="btn-export-pdf" onclick="window.print()">
@@ -233,6 +242,15 @@ function getInitials($name) {
                             </select>
                         </div>
                         <div class="filter-group">
+                            <label class="filter-label">Angkatan</label>
+                            <select class="filter-select" name="angkatan">
+                                <option value="">Semua Angkatan</option>
+                                <?php foreach($angkatans as $a): ?>
+                                <option value="<?= htmlspecialchars($a) ?>" <?= $filter_angkatan === $a ? 'selected' : '' ?>><?= htmlspecialchars($a) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="filter-group">
                             <label class="filter-label">Tingkat Prestasi</label>
                             <select class="filter-select" name="tingkat">
                                 <option value="">Semua Tingkat</option>
@@ -242,7 +260,7 @@ function getInitials($name) {
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Tahun</label>
+                            <label class="filter-label">Tahun Prestasi</label>
                             <select class="filter-select" name="tahun">
                                 <option value="">Semua Tahun</option>
                                 <?php foreach($tahuns as $t): ?>
@@ -265,10 +283,11 @@ function getInitials($name) {
                                 <th>NO</th>
                                 <th>MAHASISWA</th>
                                 <th>PROGRAM STUDI</th>
+                                <th>ANGKATAN</th>
                                 <th>NAMA PRESTASI</th>
                                 <th>TINGKAT</th>
                                 <th>JUARA</th>
-                                <th>TAHUN</th>
+                                <th>TAHUN PRESTASI</th>
                                 <th>POIN</th>
                             </tr>
                         </thead>
@@ -293,6 +312,7 @@ function getInitials($name) {
                                     </div>
                                 </td>
                                 <td><?= htmlspecialchars($row['prodi']) ?></td>
+                                <td><?= htmlspecialchars($row['angkatan']) ?></td>
                                 <td>
                                     <div style="font-weight: 600; color: #1e293b;"><?= htmlspecialchars($row['nama_prestasi']) ?></div>
                                     <div style="font-size: 11px; color: #64748b;"><?= htmlspecialchars($row['kategori']) ?></div>
@@ -305,7 +325,7 @@ function getInitials($name) {
                             <?php endforeach; ?>
                             <?php if(count($prestasi_data) == 0): ?>
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 30px; color: #64748b;">Tidak ada data prestasi yang sesuai dengan filter.</td>
+                                <td colspan="9" style="text-align: center; padding: 30px; color: #64748b;">Tidak ada data prestasi yang sesuai dengan filter.</td>
                             </tr>
                             <?php endif; ?>
                         </tbody>
@@ -315,6 +335,6 @@ function getInitials($name) {
             
         </div>
     </main>
+    <script src="../administrator/Assets/Js/Script.js?v=<?= time() ?>"></script>
 </body>
 </html>
-

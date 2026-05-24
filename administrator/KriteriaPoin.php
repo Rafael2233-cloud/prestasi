@@ -80,6 +80,13 @@ while($row = $q_pending_revisi->fetch_assoc()) {
     }
 }
 
+// Ensure any new tingkat from pending inserts gets a card in the UI
+foreach($pending_inserts as $lvl => $data) {
+    if(!isset($sorted_poin_data[$lvl])) {
+        $sorted_poin_data[$lvl] = [];
+    }
+}
+
 // Fetch all revisions for history table
 $q_all_revisi = $conn->query("SELECT * FROM poin_revisi ORDER BY tanggal_perubahan DESC");
 $all_revisi = [];
@@ -342,8 +349,8 @@ while($row = $q_all_revisi->fetch_assoc()) {
                             <div class="stat-icon bg-green"><i class="fa-solid fa-medal"></i></div>
                             <div class="stat-text">
                                 <h2><?= $stats['total_aturan'] ?? 0 ?></h2>
-                                <h4>Total Aturan</h4>
-                                <p>Jumlah seluruh aturan poin</p>
+                                <h4>Kriteria Poin</h4>
+                                <p>Penilaian prestasi mahasiswa</p>
                             </div>
                         </div>
                         <div class="stat-item">
@@ -487,11 +494,11 @@ while($row = $q_all_revisi->fetch_assoc()) {
                                     </td>
                                     <td>
                                         <?php if($rev['tipe'] === 'insert'): ?>
-                                            <span style="color: #10b981; font-weight: 600;">+ <?= $rev['poin_baru'] ?> pts</span>
+                                            <span style="color: #10b981; font-weight: 600;">+ <?= $rev['poin_baru'] ?> Poin</span>
                                         <?php elseif($rev['tipe'] === 'delete'): ?>
-                                            <span style="color: #ef4444; font-weight: 600; text-decoration: line-through;"><?= $rev['poin_lama'] ?> pts</span>
+                                            <span style="color: #ef4444; font-weight: 600; text-decoration: line-through;"><?= $rev['poin_lama'] ?> Poin</span>
                                         <?php else: ?>
-                                            <span style="color: #64748b;"><?= $rev['poin_lama'] ?> &rarr;</span> <span style="color: #2563eb; font-weight: 600;"><?= $rev['poin_baru'] ?> pts</span>
+                                            <span style="color: #64748b;"><?= $rev['poin_lama'] ?> &rarr;</span> <span style="color: #2563eb; font-weight: 600;"><?= $rev['poin_baru'] ?> Poin</span>
                                         <?php endif; ?>
                                     </td>
                                     <td><span class="badge <?= $status_class ?>"><?= $rev['status'] ?></span></td>
@@ -688,12 +695,12 @@ while($row = $q_all_revisi->fetch_assoc()) {
                         document.getElementById('kriteriaId').value = id;
                         
                         document.getElementById('kriteriaTingkat').value = tingkat;
-                        document.getElementById('kriteriaTingkat').readOnly = true;
-                        document.getElementById('kriteriaTingkat').style.backgroundColor = '#f3f4f6';
+                        document.getElementById('kriteriaTingkat').readOnly = false;
+                        document.getElementById('kriteriaTingkat').style.backgroundColor = 'white';
                         
                         document.getElementById('kriteriaJuaraInput').value = juara;
-                        document.getElementById('kriteriaJuaraInput').readOnly = true;
-                        document.getElementById('kriteriaJuaraInput').style.backgroundColor = '#f3f4f6';
+                        document.getElementById('kriteriaJuaraInput').readOnly = false;
+                        document.getElementById('kriteriaJuaraInput').style.backgroundColor = 'white';
                         
                         document.getElementById('kriteriaPoin').value = poin;
                         kriteriaModal.classList.add('active');

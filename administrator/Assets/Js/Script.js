@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const textStatus = cols[7].innerText.toLowerCase().trim();
                 
                 const matchKategori = valKategori === '' || textKategori === valKategori;
-                const matchTingkat = valTingkat === '' || textTingkat === valTingkat;
+                const matchTingkat = valTingkat === '' || textTingkat === valTingkat || textTingkat.includes(valTingkat);
                 const matchStatus = valStatus === '' || textStatus === valStatus;
                 const matchTahun = valTahun === '' || textTanggal.includes(valTahun);
                 
