@@ -74,17 +74,29 @@ if (isset($_SESSION['admin_nama']) && !empty($_SESSION['admin_nama'])) {
     if(isDark) document.body.classList.add('dark-mode');
     if(noAnim) document.body.classList.add('no-animations');
     
-    // Setup Notification and Profile Dropdown Toggle
     document.addEventListener('DOMContentLoaded', () => {
         const notifBtn = document.getElementById('notifBtn');
         const notifDropdown = document.getElementById('notifDropdown');
         const profileBtn = document.getElementById('profileBtn');
         const profileDropdown = document.getElementById('profileDropdown');
         
+        // ========================================================
+        // FIX HAMBURGER ADMIN: Ambil elemen & pasang click toggle
+        // ========================================================
+        const toggleSidebarTopbar = document.getElementById('toggleSidebarTopbar');
+        const sidebar = document.getElementById('sidebar');
+        
+        if(toggleSidebarTopbar && sidebar) {
+            toggleSidebarTopbar.addEventListener('click', (e) => {
+                e.stopPropagation(); // Biar gak tabrakan sama event click document di bawah
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+        // ========================================================
+        
         if(notifBtn && notifDropdown) {
             notifBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // Close profile dropdown if open
                 if(profileDropdown && profileDropdown.classList.contains('show')) {
                     profileDropdown.classList.remove('show');
                 }
@@ -95,7 +107,6 @@ if (isset($_SESSION['admin_nama']) && !empty($_SESSION['admin_nama'])) {
         if(profileBtn && profileDropdown) {
             profileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // Close notification dropdown if open
                 if(notifDropdown && notifDropdown.classList.contains('show')) {
                     notifDropdown.classList.remove('show');
                 }
