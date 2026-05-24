@@ -762,6 +762,59 @@ window.rejectPrestasi = function (id) {
     }
 };
 
+window.rejectPrestasi = function (id) {
+    currentRejectId = id;
+    const rejectModal = document.getElementById('rejectModal');
+    const rejectReasonInput = document.getElementById('rejectReason');
+
+    if (rejectModal && rejectReasonInput) {
+        rejectReasonInput.value = ''; // Reset input
+        rejectModal.classList.add('active'); // Munculin modal
+    } else {
+        console.error("HTML Modal Tolak belum ditambahin di VerifikasiPrestasi.php!");
+    }
+};
+
+// Tutup Modal Tolak (Buat tombol Batal / X)
+window.closeRejectModal = function () {
+    const rejectModal = document.getElementById('rejectModal');
+    if (rejectModal) rejectModal.classList.remove('active');
+    currentRejectId = null;
+};
+
+// Kirim Data Penolakan
+window.submitReject = function () {
+    const alasan = document.getElementById('rejectReason').value;
+
+    if (alasan.trim() === '') {
+        alert('Alasan penolakan tidak boleh kosong!');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'reject');
+    formData.append('id', currentRejectId);
+    formData.append('alasan', alasan.trim());
+
+    fetch('ApiVerifikasi.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload(); // Refresh biar status berubah
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Terjadi kesalahan sistem saat menolak.");
+        });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // Other DOM elements...
 
