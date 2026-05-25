@@ -1,6 +1,9 @@
 <?php
 session_start();
-if (!isset($_SESSION['admin_logged_in'])) { header("Location: Index.php"); exit; }
+if (!isset($_SESSION['admin_logged_in'])) {
+    header("Location: Index.php");
+    exit;
+}
 require '../koneksi.php';
 
 // Year Filter
@@ -79,7 +82,7 @@ $q_leaderboard = $conn->query("
 ");
 $leaderboard_data = [];
 if ($q_leaderboard) {
-    while($r = $q_leaderboard->fetch_assoc()) {
+    while ($r = $q_leaderboard->fetch_assoc()) {
         $leaderboard_data[] = $r;
     }
 }
@@ -90,33 +93,37 @@ if ($q_leaderboard) {
 $activities = [];
 $q_pres_act = $conn->query("SELECT p.status, p.updated_at as waktu, m.nama, p.judul as keterangan FROM prestasi p JOIN mahasiswa m ON p.mahasiswa_id = m.id WHERE 1=1 $tahun_condition ORDER BY p.updated_at DESC LIMIT 5");
 if ($q_pres_act) {
-    while($r = $q_pres_act->fetch_assoc()){
-        if($r['status'] == 'approved') {
+    while ($r = $q_pres_act->fetch_assoc()) {
+        if ($r['status'] == 'approved') {
             $icon = '<div class="act-icon-small bg-green"><i class="fa-solid fa-check"></i></div>';
-            $ket = 'Prestasi "'.htmlspecialchars($r['keterangan']).'" diverifikasi oleh Admin';
-        } elseif($r['status'] == 'rejected') {
+            $ket = 'Prestasi "' . htmlspecialchars($r['keterangan']) . '" diverifikasi oleh Admin';
+        } elseif ($r['status'] == 'rejected') {
             $icon = '<div class="act-icon-small bg-red"><i class="fa-solid fa-xmark"></i></div>';
-            $ket = 'Prestasi "'.htmlspecialchars($r['keterangan']).'" ditolak oleh Admin';
+            $ket = 'Prestasi "' . htmlspecialchars($r['keterangan']) . '" ditolak oleh Admin';
         } else {
             $icon = '<div class="act-icon-small bg-blue"><i class="fa-solid fa-user"></i></div>';
-            $ket = 'Mahasiswa '.htmlspecialchars($r['nama']) . ' menambahkan prestasi baru';
+            $ket = 'Mahasiswa ' . htmlspecialchars($r['nama']) . ' menambahkan prestasi baru';
         }
         $activities[] = ['waktu' => $r['waktu'], 'keterangan' => $ket, 'icon' => $icon];
     }
 }
 
 // fallback handled in view
-usort($activities, function($a, $b) { return strtotime($b['waktu']) - strtotime($a['waktu']); });
+usort($activities, function ($a, $b) {
+    return strtotime($b['waktu']) - strtotime($a['waktu']);
+});
 $activities = array_slice($activities, 0, 5);
 
-function getInitialsNew($name) {
+function getInitialsNew($name)
+{
     if (!$name) return '-';
     $words = explode(' ', trim($name));
     $initials = strtoupper(substr($words[0], 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
     return $initials;
 }
 
-function time_elapsed_string($datetime) {
+function time_elapsed_string($datetime)
+{
     $now = new DateTime;
     $ago = new DateTime($datetime);
     $diff = $now->diff($ago);
@@ -125,8 +132,9 @@ function time_elapsed_string($datetime) {
     if ($diff->i > 0) return $diff->i . ' menit lalu';
     return '10 menit lalu'; // Match image exactly for testing if recent
 }
-function format_date_short($datetime) {
-    if(!$datetime || $datetime == '0000-00-00') return '-';
+function format_date_short($datetime)
+{
+    if (!$datetime || $datetime == '0000-00-00') return '-';
     global $bulan;
     $time = strtotime($datetime);
     return date('d', $time) . ' ' . substr($bulan[(int)date('m', $time)], 0, 3) . ' ' . date('Y');
@@ -136,6 +144,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -147,150 +156,667 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
     <link rel="stylesheet" href="Assets/Css/Style.css?v=<?= time() ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        html, body {
+        html,
+        body {
             overflow-x: hidden !important;
             max-width: 100%;
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
         * {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
         ::-webkit-scrollbar:horizontal {
             display: none !important;
         }
+
         *::-webkit-scrollbar:horizontal {
             display: none !important;
         }
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .content-wrapper-new { padding: 30px; overflow-x: hidden !important; width: 100%; box-sizing: border-box; }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .content-wrapper-new {
+            padding: 30px;
+            overflow-x: hidden !important;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
         /* Dashboard Header */
-        .dash-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
-        .dash-title h1 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; color: #0f172a; }
-        .dash-title p { margin: 0; font-size: 13px; color: #64748b; }
-        .dash-date { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .dash-date i { font-size: 20px; color: #3b82f6; }
-        .dash-date-text { font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.3; }
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .dash-title h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .dash-title p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .dash-date {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        }
+
+        .dash-date i {
+            font-size: 20px;
+            color: #3b82f6;
+        }
+
+        .dash-date-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+        }
 
         /* Section Titles */
-        .section-title { font-size: 13px; font-weight: 700; color: #2563eb; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
 
         /* Top Stats Grid */
-        .top-stats-wrap { display: flex; gap: 20px; margin-bottom: 25px; }
-        .stats-group-1 { flex: 1; }
-        .stats-group-2 { flex: 3; }
-        .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        .stats-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .top-stats-wrap {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
 
-        .stat-card-new { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; transition: all 0.2s ease; position: relative; overflow: hidden; }
-        .stat-card-new:hover { transform: translateY(-2px); box-shadow: 0 4px 12px -4px rgba(0,0,0,0.05); border-color: #cbd5e1; }
-        .stat-card-new::before { content: ''; position: absolute; left: 0; top: 0; width: 3px; height: 100%; }
-        .stat-card-new.sc-blue::before { background-color: #3b82f6; }
-        .stat-card-new.sc-green::before { background-color: #10b981; }
-        .stat-card-new.sc-orange::before { background-color: #f59e0b; }
-        .stat-card-new.sc-red::before { background-color: #ef4444; }
-        .sc-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; }
-        .sc-info { display: flex; flex-direction: column; width: 100%; justify-content: center; }
-        .sc-title { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px; line-height: 1; text-transform: uppercase; letter-spacing: 0.02em; }
-        .sc-val { font-size: 26px; color: #0f172a; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-        .sc-sub { font-size: 11px; color: #94a3b8; font-weight: 500; line-height: 1; }
-        .sc-sub.green { color: #10b981; } .sc-sub.orange { color: #f59e0b; } .sc-sub.red { color: #ef4444; }
+        .stats-group-1 {
+            flex: 1;
+        }
+
+        .stats-group-2 {
+            flex: 3;
+        }
+
+        .stats-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stats-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card-new {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card-new:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        .stat-card-new::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+        }
+
+        .stat-card-new.sc-blue::before {
+            background-color: #3b82f6;
+        }
+
+        .stat-card-new.sc-green::before {
+            background-color: #10b981;
+        }
+
+        .stat-card-new.sc-orange::before {
+            background-color: #f59e0b;
+        }
+
+        .stat-card-new.sc-red::before {
+            background-color: #ef4444;
+        }
+
+        .sc-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .sc-info {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .sc-title {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .sc-val {
+            font-size: 26px;
+            color: #0f172a;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .sc-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .sc-sub.green {
+            color: #10b981;
+        }
+
+        .sc-sub.orange {
+            color: #f59e0b;
+        }
+
+        .sc-sub.red {
+            color: #ef4444;
+        }
 
         /* Colors */
-        .bg-light-blue { background: #eff6ff; color: #3b82f6; }
-        .bg-light-green { background: #ecfdf5; color: #10b981; }
-        .bg-light-orange { background: #fffbeb; color: #f59e0b; }
-        .bg-light-red { background: #fef2f2; color: #ef4444; }
+        .bg-light-blue {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .bg-light-green {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .bg-light-orange {
+            background: #fffbeb;
+            color: #f59e0b;
+        }
+
+        .bg-light-red {
+            background: #fef2f2;
+            color: #ef4444;
+        }
 
         /* Mid Grid */
-        .mid-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
-        .panel-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); padding: 20px; display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .panel-card:hover { box-shadow: 0 15px 30px -5px rgba(0,0,0,0.06), 0 10px 15px -6px rgba(0,0,0,0.02); }
-        .pc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .pc-title { font-size: 14px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
-        .pc-link { font-size: 11px; font-weight: 700; color: #2563eb; text-decoration: none; display: flex; align-items: center; gap: 5px; transition: background-color 0.2s ease-out, transform 0.2s; padding: 4px 8px; border-radius: 6px; }
-        .pc-link:hover { text-decoration: none; background: #eff6ff; transform: translateX(2px); }
+        .mid-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .panel-card:hover {
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.06), 0 10px 15px -6px rgba(0, 0, 0, 0.02);
+        }
+
+        .pc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pc-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pc-link {
+            font-size: 11px;
+            font-weight: 700;
+            color: #2563eb;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s ease-out, transform 0.2s;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .pc-link:hover {
+            text-decoration: none;
+            background: #eff6ff;
+            transform: translateX(2px);
+        }
 
         /* Chart Area */
-        .chart-container { position: relative; height: 220px; width: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .chart-container:hover { transform: scale(1.03); }
-        .chart-center-text { position: absolute; text-align: center; pointer-events: none; }
-        .cct-label { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 2px; }
-        .cct-val { font-size: 20px; font-weight: 800; color: #2563eb; }
-        .chart-legend-custom { display: flex; justify-content: space-between; margin-top: 15px; padding: 0 20px; }
-        .cl-item { text-align: center; transition: transform 0.3s; }
-        .cl-item:hover { transform: translateY(-2px); }
-        .cl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; transition: transform 0.3s; }
-        .cl-title { font-size: 11px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
-        .cl-val { font-size: 18px; font-weight: 800; color: #0f172a; }
-        .cl-sub { font-size: 10px; font-weight: 600; color: #64748b; }
+        .chart-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .chart-container:hover {
+            transform: scale(1.03);
+        }
+
+        .chart-center-text {
+            position: absolute;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .cct-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .cct-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2563eb;
+        }
+
+        .chart-legend-custom {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 0 20px;
+        }
+
+        .cl-item {
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .cl-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .cl-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            transition: transform 0.3s;
+        }
+
+        .cl-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+
+        .cl-val {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .cl-sub {
+            font-size: 10px;
+            font-weight: 600;
+            color: #64748b;
+        }
 
 
         /* Bottom Grid */
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
 
         /* Activity List */
-        .activity-list { display: flex; flex-direction: column; gap: 8px; }
-        .act-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .act-item:hover { background: #f8fafc; border-color: #e2e8f0; transform: translateX(6px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); }
-        .act-icon-small { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; transition: transform 0.3s; }
-        .act-item:hover .act-icon-small { transform: scale(1.1); }
-        .bg-blue { background: #3b82f6; color: white; } .bg-green { background: #10b981; color: white; } .bg-red { background: #ef4444; color: white; }
-        .act-text { font-size: 11px; font-weight: 500; color: #334155; line-height: 1.5; flex: 1; transition: color 0.3s; }
-        .act-item:hover .act-text { color: #0f172a; }
-        .act-time { font-size: 10px; font-weight: 600; color: #64748b; white-space: nowrap; }
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .act-item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .act-item:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            transform: translateX(6px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .act-icon-small {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+
+        .act-item:hover .act-icon-small {
+            transform: scale(1.1);
+        }
+
+        .bg-blue {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .bg-green {
+            background: #10b981;
+            color: white;
+        }
+
+        .bg-red {
+            background: #ef4444;
+            color: white;
+        }
+
+        .act-text {
+            font-size: 11px;
+            font-weight: 500;
+            color: #334155;
+            line-height: 1.5;
+            flex: 1;
+            transition: color 0.3s;
+        }
+
+        .act-item:hover .act-text {
+            color: #0f172a;
+        }
+
+        .act-time {
+            font-size: 10px;
+            font-weight: 600;
+            color: #64748b;
+            white-space: nowrap;
+        }
 
         /* Top Students List */
-        .ts-list { display: flex; flex-direction: column; gap: 8px; }
-        .ts-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .ts-item:hover { background: #f8fafc; border-color: #e2e8f0; transform: translateX(6px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); }
-        .ts-left { display: flex; align-items: center; gap: 12px; }
-        .ts-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; transition: transform 0.3s; }
-        .ts-item:hover .ts-avatar { transform: scale(1.1) rotate(-5deg); }
-        .av-orange { background: #f59e0b; } .av-purple { background: #8b5cf6; } .av-blue { background: #3b82f6; } .av-cyan { background: #06b6d4; } .av-pink { background: #ec4899; }
-        .ts-name { font-size: 12px; font-weight: 700; color: #0f172a; transition: color 0.3s; }
-        .ts-item:hover .ts-name { color: #2563eb; }
-        .ts-points { font-size: 13px; font-weight: 800; color: #0f172a; }
+        .ts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ts-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .ts-item:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            transform: translateX(6px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .ts-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ts-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            transition: transform 0.3s;
+        }
+
+        .ts-item:hover .ts-avatar {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .av-orange {
+            background: #f59e0b;
+        }
+
+        .av-purple {
+            background: #8b5cf6;
+        }
+
+        .av-blue {
+            background: #3b82f6;
+        }
+
+        .av-cyan {
+            background: #06b6d4;
+        }
+
+        .av-pink {
+            background: #ec4899;
+        }
+
+        .ts-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+            transition: color 0.3s;
+        }
+
+        .ts-item:hover .ts-name {
+            color: #2563eb;
+        }
+
+        .ts-points {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+        }
 
         /* Button Transitions overrides */
-        .logout-btn-new { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important; }
-        .logout-btn-new:hover { background: #fee2e2 !important; color: #ef4444 !important; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1); }
+        .logout-btn-new {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .logout-btn-new:hover {
+            background: #fee2e2 !important;
+            color: #ef4444 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+        }
 
         /* Animations */
         @keyframes fadeInUpSmooth {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .animate-slide-up { animation: fadeInUpSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; } .d-3 { animation-delay: 0.3s; }
-        .item-anim { opacity: 0; animation: fadeInUpSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .d-item-1 { animation-delay: 0.3s; } .d-item-2 { animation-delay: 0.4s; } .d-item-3 { animation-delay: 0.5s; } .d-item-4 { animation-delay: 0.6s; } .d-item-5 { animation-delay: 0.7s; }
-        
+
+        .animate-slide-up {
+            animation: fadeInUpSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .d-1 {
+            animation-delay: 0.1s;
+        }
+
+        .d-2 {
+            animation-delay: 0.2s;
+        }
+
+        .d-3 {
+            animation-delay: 0.3s;
+        }
+
+        .item-anim {
+            opacity: 0;
+            animation: fadeInUpSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .d-item-1 {
+            animation-delay: 0.3s;
+        }
+
+        .d-item-2 {
+            animation-delay: 0.4s;
+        }
+
+        .d-item-3 {
+            animation-delay: 0.5s;
+        }
+
+        .d-item-4 {
+            animation-delay: 0.6s;
+        }
+
+        .d-item-5 {
+            animation-delay: 0.7s;
+        }
+
         @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
         }
-        .pulse-icon { animation: pulseGlow 2s infinite; }
+
+        .pulse-icon {
+            animation: pulseGlow 2s infinite;
+        }
 
         /* Responsive Grid Adjustments */
         @media (max-width: 1024px) {
-            .top-stats-wrap { flex-direction: column; gap: 20px; }
-            .mid-grid { grid-template-columns: 1fr; }
-            .bottom-grid { grid-template-columns: 1fr; }
+            .top-stats-wrap {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .mid-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
         }
+
+        /* Gabungin aja aturannya biar di HP selalu 1 kolom */
         @media (max-width: 768px) {
-            .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
-            .stats-grid-3 { grid-template-columns: 1fr; }
-            .content-wrapper-new { padding: 15px; }
+            .stats-grid-4 {
+                grid-template-columns: 1fr !important;
+                /* WAJIB 1 KOLOM */
+                gap: 15px;
+            }
+
+            .content-wrapper-new {
+                padding: 15px;
+            }
+
+            .stat-card-new {
+                padding: 15px !important;
+            }
         }
-        @media (max-width: 480px) {
-            .stats-grid-4 { grid-template-columns: 1fr; }
         }
     </style>
 </head>
+
 <body class="dashboard-body new-dashboard">
 
     <!-- Sidebar -->
@@ -332,11 +858,11 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                 <li class="menu-item-new">
                     <a href="VerifikasiPrestasi.php">
                         <i class="fa-solid fa-check-to-slot"></i> <span class="menu-text">Verifikasi Prestasi</span>
-                        <?php if(isset($prestasi_menunggu) && $prestasi_menunggu > 0): ?><span class="badge"><?= $prestasi_menunggu ?></span><?php endif; ?>
+                        <?php if (isset($prestasi_menunggu) && $prestasi_menunggu > 0): ?><span class="badge"><?= $prestasi_menunggu ?></span><?php endif; ?>
                     </a>
                 </li>
             </ul>
-            
+
 
 
             <div class="sidebar-menu-title mt-custom">MANAJEMEN DATA</div>
@@ -353,7 +879,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
         </div>
 
         <div class="sidebar-footer-new">
-            
+
             <a href="Logout.php" class="logout-btn-new"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="menu-text">Logout</span></a>
         </div>
     </aside>
@@ -424,7 +950,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
             </div>
 
             <!-- Mid Grid -->
-            <div class="mid-grid animate-slide-up d-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div class="mid-grid animate-slide-up d-2" >
                 <!-- Grafik Perkembangan Prestasi -->
                 <div class="panel-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); padding: 20px; display: flex; flex-direction: column;">
                     <div class="pc-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -448,32 +974,33 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                         <a href="Leaderboard.php" class="pc-link" style="font-size: 11px; font-weight: 700; color: #2563eb; text-decoration: none; display: flex; align-items: center; gap: 5px; transition: background-color 0.2s; padding: 4px 8px; border-radius: 6px;">Lihat Semua <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                     <div class="ts-list" style="display: flex; flex-direction: column; gap: 8px;">
-                        <?php if(empty($leaderboard_data)): ?>
+                        <?php if (empty($leaderboard_data)): ?>
                             <div style="padding: 20px; text-align: center; color: #64748b; font-size: 13px;">Belum ada data mahasiswa.</div>
                         <?php else: ?>
-                            <?php 
+                            <?php
                             $i = 0;
-                            foreach($leaderboard_data as $lb): 
+                            foreach ($leaderboard_data as $lb):
                                 $av = $avatar_classes[$i % count($avatar_classes)];
                                 $initials = getInitialsNew($lb['nama']);
                                 $av_bg = '';
-                                if($av == 'av-orange') $av_bg = 'background: #f59e0b;';
-                                if($av == 'av-purple') $av_bg = 'background: #8b5cf6;';
-                                if($av == 'av-blue') $av_bg = 'background: #3b82f6;';
-                                if($av == 'av-cyan') $av_bg = 'background: #06b6d4;';
-                                if($av == 'av-pink') $av_bg = 'background: #ec4899;';
+                                if ($av == 'av-orange') $av_bg = 'background: #f59e0b;';
+                                if ($av == 'av-purple') $av_bg = 'background: #8b5cf6;';
+                                if ($av == 'av-blue') $av_bg = 'background: #3b82f6;';
+                                if ($av == 'av-cyan') $av_bg = 'background: #06b6d4;';
+                                if ($av == 'av-pink') $av_bg = 'background: #ec4899;';
                             ?>
-                            <div class="ts-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-                                <div class="ts-left" style="display: flex; align-items: center; gap: 12px;">
-                                    <div class="ts-avatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; <?= $av_bg ?>"><?= $initials ?></div>
-                                    <div>
-                                        <div class="ts-name" style="font-size: 12px; font-weight: 700; color: #0f172a;"><?= htmlspecialchars($lb['nama']) ?></div>
-                                        <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['total_prestasi'] ?? '0') ?> Prestasi</div>
+                                <div class="ts-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                                    <div class="ts-left" style="display: flex; align-items: center; gap: 12px;">
+                                        <div class="ts-avatar" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; <?= $av_bg ?>"><?= $initials ?></div>
+                                        <div>
+                                            <div class="ts-name" style="font-size: 12px; font-weight: 700; color: #0f172a;"><?= htmlspecialchars($lb['nama']) ?></div>
+                                            <div style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($lb['total_prestasi'] ?? '0') ?> Prestasi</div>
+                                        </div>
                                     </div>
+                                    <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
                                 </div>
-                                <div class="ts-points" style="font-size: 13px; font-weight: 800; color: #0f172a;"><span class="count-up" data-value="<?= $lb['total_poin'] ?>">0</span> Poin</div>
-                            </div>
-                            <?php $i++; endforeach; ?>
+                            <?php $i++;
+                            endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -488,19 +1015,19 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                         <a href="VerifikasiPrestasi.php" class="pc-link" style="font-size: 11px; font-weight: 700; color: #2563eb; text-decoration: none; display: flex; align-items: center; gap: 5px; transition: background-color 0.2s; padding: 4px 8px; border-radius: 6px;">Lihat Semua <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                     <div class="activity-list" style="display: flex; flex-direction: column; gap: 8px;">
-                        <?php if(empty($activities)): ?>
+                        <?php if (empty($activities)): ?>
                             <div style="padding: 20px; text-align: center; color: #64748b; font-size: 13px;">Belum ada aktivitas.</div>
                         <?php else: ?>
-                            <?php foreach($activities as $act): 
+                            <?php foreach ($activities as $act):
                                 $is_approved = strpos($act['icon'], 'bg-green') !== false;
                                 $is_pending = strpos($act['icon'], 'bg-blue') !== false;
                                 $icon_html = $is_approved ? '<i class="fa-solid fa-check"></i>' : ($is_pending ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-xmark"></i>');
                             ?>
-                            <div class="act-item item-anim" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-                                <div class="act-icon-small" style="width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; color: white; <?= $is_approved ? 'background:#10b981;' : ($is_pending ? 'background:#3b82f6;' : 'background:#ef4444;') ?>"><?= $icon_html ?></div>
-                                <div class="act-text" style="font-size: 11px; font-weight: 500; color: #334155; line-height: 1.5; flex: 1;"><?= $act['keterangan'] ?></div>
-                                <div class="act-time" style="font-size: 10px; font-weight: 600; color: #64748b; white-space: nowrap;"><?= time_elapsed_string($act['waktu']) ?></div>
-                            </div>
+                                <div class="act-item item-anim" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                                    <div class="act-icon-small" style="width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; color: white; <?= $is_approved ? 'background:#10b981;' : ($is_pending ? 'background:#3b82f6;' : 'background:#ef4444;') ?>"><?= $icon_html ?></div>
+                                    <div class="act-text" style="font-size: 11px; font-weight: 500; color: #334155; line-height: 1.5; flex: 1;"><?= $act['keterangan'] ?></div>
+                                    <div class="act-time" style="font-size: 10px; font-weight: 600; color: #64748b; white-space: nowrap;"><?= time_elapsed_string($act['waktu']) ?></div>
+                                </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
@@ -517,17 +1044,17 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
             countElements.forEach(el => {
                 const targetValue = parseInt(el.getAttribute('data-value'), 10) || 0;
                 let startValue = 0;
-                const duration = 1500; 
+                const duration = 1500;
                 let startTimestamp = null;
                 const step = (timestamp) => {
                     if (!startTimestamp) startTimestamp = timestamp;
                     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                     const easeProgress = 1 - Math.pow(1 - progress, 4); // easeOutQuart
                     const current = Math.floor(easeProgress * (targetValue - startValue) + startValue);
-                    
+
                     // Format with dot separator if > 999
                     el.innerText = current > 999 ? current.toLocaleString('id-ID') : current;
-                    
+
                     if (progress < 1) {
                         window.requestAnimationFrame(step);
                     } else {
@@ -544,14 +1071,13 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                 type: 'bar',
                 data: {
                     labels: <?= $chart_labels_json ?>,
-                    datasets: [
-                        {
+                    datasets: [{
                             label: 'Akademik',
                             data: <?= $chart_akademik_json ?>,
                             backgroundColor: '#3b82f6',
                             borderColor: '#3b82f6',
                             borderWidth: 0,
-                            hoverBackgroundColor: '#2563eb', 
+                            hoverBackgroundColor: '#2563eb',
                             hoverBorderColor: '#2563eb',
                             hoverBorderWidth: 6,
                             borderRadius: 6,
@@ -564,7 +1090,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                             backgroundColor: '#10b981',
                             borderColor: '#10b981',
                             borderWidth: 0,
-                            hoverBackgroundColor: '#059669', 
+                            hoverBackgroundColor: '#059669',
                             hoverBorderColor: '#059669',
                             hoverBorderWidth: 6,
                             borderRadius: 6,
@@ -581,7 +1107,11 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                             display: true,
                             position: 'bottom',
                             labels: {
-                                font: { family: 'Inter', size: 12, weight: '600' },
+                                font: {
+                                    family: 'Inter',
+                                    size: 12,
+                                    weight: '600'
+                                },
                                 color: '#475569',
                                 usePointStyle: true,
                                 boxWidth: 8
@@ -589,8 +1119,14 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleFont: { size: 13, family: 'Inter' },
-                            bodyFont: { size: 13, family: 'Inter' },
+                            titleFont: {
+                                size: 13,
+                                family: 'Inter'
+                            },
+                            bodyFont: {
+                                size: 13,
+                                family: 'Inter'
+                            },
                             padding: 10,
                             cornerRadius: 8,
                             mode: 'index',
@@ -601,12 +1137,32 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { precision: 0, font: { family: 'Inter', size: 11 }, color: '#64748b' },
-                            grid: { color: '#f1f5f9', drawBorder: false }
+                            ticks: {
+                                precision: 0,
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                color: '#f1f5f9',
+                                drawBorder: false
+                            }
                         },
                         x: {
-                            ticks: { font: { family: 'Inter', size: 12, weight: '600' }, color: '#334155' },
-                            grid: { display: false, drawBorder: false }
+                            ticks: {
+                                font: {
+                                    family: 'Inter',
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                color: '#334155'
+                            },
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            }
                         }
                     },
                     animations: {
@@ -642,4 +1198,5 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
     </script>
     <script src="Assets/Js/Script.js?v=<?= time() ?>"></script>
 </body>
+
 </html>
