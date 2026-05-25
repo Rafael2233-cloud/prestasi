@@ -813,7 +813,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
                 padding: 15px !important;
             }
         }
-        }
+        
     </style>
 </head>
 

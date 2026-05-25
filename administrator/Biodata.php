@@ -1,6 +1,9 @@
 <?php
 session_start();
-if (!isset($_SESSION['admin_logged_in'])) { header("Location: Index.php"); exit; }
+if (!isset($_SESSION['admin_logged_in'])) {
+    header("Location: Index.php");
+    exit;
+}
 require '../koneksi.php';
 
 // Get Stats for Topbar notification
@@ -13,6 +16,7 @@ $admin_data = $q_admin->fetch_assoc();
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,17 +35,19 @@ $admin_data = $q_admin->fetch_assoc();
         .profile-container {
             background-color: #ffffff;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
             border: 1px solid #f0f0f0;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
         }
+
         @media (min-width: 768px) {
             .profile-container {
                 flex-direction: row;
             }
         }
+
         .profile-left {
             padding: 40px;
             text-align: center;
@@ -49,6 +55,7 @@ $admin_data = $q_admin->fetch_assoc();
             flex: 1;
             max-width: 350px;
         }
+
         .profile-right {
             padding: 40px;
             flex: 2;
@@ -56,6 +63,7 @@ $admin_data = $q_admin->fetch_assoc();
             flex-direction: column;
             position: relative;
         }
+
         .profile-avatar {
             width: 100px;
             height: 100px;
@@ -69,12 +77,14 @@ $admin_data = $q_admin->fetch_assoc();
             font-weight: 700;
             margin: 0 auto 20px;
         }
+
         .profile-name {
             font-size: 20px;
             font-weight: 700;
             color: #1e293b;
             margin-bottom: 5px;
         }
+
         .profile-role-badge {
             display: inline-block;
             background-color: #eff6ff;
@@ -85,12 +95,14 @@ $admin_data = $q_admin->fetch_assoc();
             border-radius: 20px;
             margin-bottom: 30px;
         }
+
         .profile-stats-list {
             list-style: none;
             padding: 0;
             margin: 0;
             text-align: left;
         }
+
         .profile-stats-list li {
             display: flex;
             justify-content: space-between;
@@ -99,41 +111,48 @@ $admin_data = $q_admin->fetch_assoc();
             border-bottom: 1px solid #f1f5f9;
             font-size: 13px;
         }
+
         .profile-stats-list li:last-child {
             border-bottom: none;
         }
+
         .profile-stats-list li .stat-label {
             color: #64748b;
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
         .profile-stats-list li .stat-value {
             font-weight: 600;
             color: #334155;
         }
+
         .stat-value.status-active {
             color: #10b981;
         }
-        
+
         .section-title {
             font-size: 16px;
             font-weight: 600;
             color: #1e293b;
             margin-bottom: 25px;
         }
+
         .info-list {
             list-style: none;
             padding: 0;
             margin: 0;
             flex-grow: 1;
         }
+
         .info-list li {
             display: flex;
             padding: 15px 0;
             border-bottom: 1px dashed #e2e8f0;
             align-items: flex-start;
         }
+
         .info-list li .info-icon {
             width: 35px;
             height: 35px;
@@ -146,6 +165,7 @@ $admin_data = $q_admin->fetch_assoc();
             margin-right: 15px;
             flex-shrink: 0;
         }
+
         .info-list li .info-label {
             width: 150px;
             font-size: 14px;
@@ -154,34 +174,40 @@ $admin_data = $q_admin->fetch_assoc();
             padding-top: 8px;
             flex-shrink: 0;
         }
+
         .info-list li .info-value {
             font-size: 14px;
             color: #1e293b;
             font-weight: 500;
             padding-top: 8px;
         }
-        
+
         .btn-edit {
             background-color: #2563eb;
             color: #ffffff;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             font-size: 14px;
+
+            /* INI KUNCI BIAR RAPI */
+            align-self: flex-end;
+            /* Otomatis mentok kanan */
+            margin-top: 30px;
+            /* Kasih jarak aman dari form di atasnya */
         }
+
         .btn-edit:hover {
             background-color: #1d4ed8;
         }
-        
+
         /* Edit Mode Styles */
         .edit-input {
             width: 100%;
@@ -192,31 +218,80 @@ $admin_data = $q_admin->fetch_assoc();
             font-family: inherit;
             display: none;
         }
+
         .edit-input:focus {
             outline: none;
             border-color: #2563eb;
         }
+
         .edit-mode .info-value-text {
             display: none;
         }
+
         .edit-mode .edit-input {
             display: block;
         }
-        
+
         /* Header Styles */
-        .page-header-new { margin-bottom: 25px; }
-        .breadcrumb-top { font-size: 13px; color: #2563eb; font-weight: 500; text-align: right; margin-bottom: 5px; }
-        .breadcrumb-top span { color: #6b7280; }
-        .breadcrumb-top a { color: #2563eb; text-decoration: none; }
-        .page-header-flex { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; }
-        .page-title-new { display: flex; align-items: center; gap: 15px; }
-        
+        .page-header-new {
+            margin-bottom: 25px;
+        }
+
+        .breadcrumb-top {
+            font-size: 13px;
+            color: #2563eb;
+            font-weight: 500;
+            text-align: right;
+            margin-bottom: 5px;
+        }
+
+        .breadcrumb-top span {
+            color: #6b7280;
+        }
+
+        .breadcrumb-top a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .page-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+        }
+
+        .page-title-new {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         @media (max-width: 768px) {
-            .page-header-flex { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .breadcrumb-top { align-self: flex-start; }
+
+            /* Kecilin jarak ruang kosong di HP biar gak boros tempat */
+            .profile-left,
+            .profile-right {
+                padding: 20px;
+            }
+
+            /* Bikin garis pemisah di HP jadi horizontal, bukan vertikal */
+            .profile-left {
+                max-width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            /* Tombol Edit full lebar kalau di HP, biar gampang dipencet */
+            .btn-edit {
+                align-self: stretch;
+                width: 100%;
+            }
+        }
         }
     </style>
 </head>
+
 <body class="dashboard-body new-dashboard">
 
     <!-- Sidebar -->
@@ -258,11 +333,11 @@ $admin_data = $q_admin->fetch_assoc();
                 <li class="menu-item-new">
                     <a href="VerifikasiPrestasi.php">
                         <i class="fa-solid fa-check-to-slot"></i> <span class="menu-text">Verifikasi Prestasi</span>
-                        <?php if(isset($prestasi_menunggu) && $prestasi_menunggu > 0): ?><span class="badge"><?= $prestasi_menunggu ?></span><?php endif; ?>
+                        <?php if (isset($prestasi_menunggu) && $prestasi_menunggu > 0): ?><span class="badge"><?= $prestasi_menunggu ?></span><?php endif; ?>
                     </a>
                 </li>
             </ul>
-            
+
 
 
             <div class="sidebar-menu-title mt-custom">MANAJEMEN DATA</div>
@@ -279,7 +354,7 @@ $admin_data = $q_admin->fetch_assoc();
         </div>
 
         <div class="sidebar-footer-new">
-            
+
             <a href="Logout.php" class="logout-btn-new"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="menu-text">Logout</span></a>
         </div>
     </aside>
@@ -305,7 +380,7 @@ $admin_data = $q_admin->fetch_assoc();
                     </div>
                 </div>
             </div>
-            
+
             <div class="profile-container">
                 <!-- Left Column -->
                 <div class="profile-left">
@@ -313,7 +388,7 @@ $admin_data = $q_admin->fetch_assoc();
                     <div class="profile-name" id="displayNamaLeft"><?= htmlspecialchars($_SESSION['admin_nama'] ?? 'Admin') ?></div>
                     <div style="font-size: 13px; color: #64748b; margin-bottom: 5px;" id="displayNipLeft">NIP: <?= htmlspecialchars($_SESSION['admin_nip'] ?? '-') ?></div>
                     <div class="profile-role-badge">Admin Prestasi Mahasiswa</div>
-                    
+
                     <ul class="profile-stats-list">
                         <li>
                             <span class="stat-label"><i class="fa-regular fa-clock"></i> Terakhir Login</span>
@@ -329,11 +404,11 @@ $admin_data = $q_admin->fetch_assoc();
                         </li>
                     </ul>
                 </div>
-                
+
                 <!-- Right Column -->
                 <div class="profile-right" id="profileFormArea">
                     <h3 class="section-title">Informasi Akun</h3>
-                    
+
                     <ul class="info-list">
                         <li class="info-item">
                             <div class="info-icon"><i class="fa-regular fa-id-card"></i></div>
@@ -388,16 +463,16 @@ $admin_data = $q_admin->fetch_assoc();
                             </div>
                         </li>
                     </ul>
-                    
+
                     <button class="btn-edit" id="btnEditProfile">
                         <i class="fa-solid fa-pen-to-square"></i> <span id="btnEditText">Edit Profil</span>
                     </button>
                 </div>
             </div>
-            
+
             <!-- Ganti Password Section -->
             <div class="profile-container" style="margin-top: 25px; display: block; padding: 40px;">
-                
+
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
                     <div style="width: 45px; height: 45px; background: #eff6ff; color: #2563eb; border-radius: 10px; border: 1px solid #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                         <i class="fa-solid fa-lock"></i>
@@ -423,7 +498,7 @@ $admin_data = $q_admin->fetch_assoc();
                             <i class="fa-regular fa-eye toggle-password-settings" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; transition: color 0.2s;"></i>
                         </div>
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 0;">
                         <label style="display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px;">Konfirmasi Password Baru <span style="color: #ef4444;">*</span></label>
                         <div class="password-wrapper" style="position: relative;">
@@ -439,7 +514,7 @@ $admin_data = $q_admin->fetch_assoc();
                     </button>
                 </div>
             </div>
-            
+
         </div>
     </main>
 
@@ -451,20 +526,20 @@ $admin_data = $q_admin->fetch_assoc();
             const btnEditText = document.getElementById('btnEditText');
             const formArea = document.getElementById('profileFormArea');
             const infoItems = document.querySelectorAll('.info-item');
-            
+
             let isEditing = false;
-            
+
             btnEditProfile.addEventListener('click', function() {
                 if (!isEditing) {
                     // Masuk mode edit
                     isEditing = true;
-                    
+
                     // Hanya item dengan input yang bisa diedit (NIP, Nama, Username, dan Email)
                     infoItems[0].classList.add('edit-mode');
                     infoItems[1].classList.add('edit-mode');
                     infoItems[2].classList.add('edit-mode');
                     infoItems[3].classList.add('edit-mode');
-                    
+
                     // Ubah tombol
                     this.style.backgroundColor = '#10b981'; // Green for save
                     this.innerHTML = '<i class="fa-solid fa-check"></i> <span id="btnEditText">Simpan Perubahan</span>';
@@ -474,7 +549,7 @@ $admin_data = $q_admin->fetch_assoc();
                     const newNama = document.getElementById('editNama').value;
                     const newUsername = document.getElementById('editUsername').value;
                     const newEmail = document.getElementById('editEmail').value;
-                    
+
                     const formData = new FormData();
                     formData.append('action', 'update_profile');
                     formData.append('nip', newNip);
@@ -483,55 +558,59 @@ $admin_data = $q_admin->fetch_assoc();
                     formData.append('email', newEmail);
 
                     fetch('ApiPengaturan.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Update text values
-                            infoItems[0].querySelector('.info-value-text').textContent = newNip;
-                            infoItems[1].querySelector('.info-value-text').textContent = newNama;
-                            infoItems[2].querySelector('.info-value-text').textContent = newUsername;
-                            infoItems[3].querySelector('.info-value-text').textContent = newEmail;
-                            
-                            document.getElementById('displayNamaLeft').textContent = newNama;
-                            document.getElementById('displayNipLeft').textContent = 'NIP: ' + newNip;
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update text values
+                                infoItems[0].querySelector('.info-value-text').textContent = newNip;
+                                infoItems[1].querySelector('.info-value-text').textContent = newNama;
+                                infoItems[2].querySelector('.info-value-text').textContent = newUsername;
+                                infoItems[3].querySelector('.info-value-text').textContent = newEmail;
 
-                            // Hapus mode edit
-                            infoItems[0].classList.remove('edit-mode');
-                            infoItems[1].classList.remove('edit-mode');
-                            infoItems[2].classList.remove('edit-mode');
-                            infoItems[3].classList.remove('edit-mode');
-                            
-                            // Ubah kembali tombol
-                            btnEditProfile.style.backgroundColor = '#2563eb';
-                            btnEditProfile.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> <span id="btnEditText">Edit Profil</span>';
-                            
-                            // Notifikasi sukses
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: data.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                            isEditing = false;
-                        } else {
+                                document.getElementById('displayNamaLeft').textContent = newNama;
+                                document.getElementById('displayNipLeft').textContent = 'NIP: ' + newNip;
+
+                                // Hapus mode edit
+                                infoItems[0].classList.remove('edit-mode');
+                                infoItems[1].classList.remove('edit-mode');
+                                infoItems[2].classList.remove('edit-mode');
+                                infoItems[3].classList.remove('edit-mode');
+
+                                // Ubah kembali tombol
+                                btnEditProfile.style.backgroundColor = '#2563eb';
+                                btnEditProfile.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> <span id="btnEditText">Edit Profil</span>';
+
+                                // Notifikasi sukses
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: data.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                isEditing = false;
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: data.message
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Gagal',
-                                text: data.message
+                                title: 'Error',
+                                text: 'Terjadi kesalahan sistem.'
                             });
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.' });
-                    });
+                        });
                 }
             });
-            
+
             // Toggle Password
             const toggleIcons = document.querySelectorAll('.toggle-password-settings');
             toggleIcons.forEach(icon => {
@@ -558,7 +637,11 @@ $admin_data = $q_admin->fetch_assoc();
             const confirmPass = document.getElementById('confirmPassword').value;
 
             if (!oldPass || !newPass || !confirmPass) {
-                Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Harap isi semua field password.' });
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Oops...',
+                    text: 'Harap isi semua field password.'
+                });
                 return;
             }
 
@@ -569,38 +652,42 @@ $admin_data = $q_admin->fetch_assoc();
             formData.append('confirm_password', confirmPass);
 
             fetch('ApiPengaturan.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: data.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        document.getElementById('oldPassword').value = '';
-                        document.getElementById('newPassword').value = '';
-                        document.getElementById('confirmPassword').value = '';
-                        window.location.href = 'Logout.php';
-                    });
-                } else {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            document.getElementById('oldPassword').value = '';
+                            document.getElementById('newPassword').value = '';
+                            document.getElementById('confirmPassword').value = '';
+                            window.location.href = 'Logout.php';
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: data.message
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
                     Swal.fire({
                         icon: 'error',
-                        title: 'Gagal',
-                        text: data.message
+                        title: 'Error',
+                        text: 'Terjadi kesalahan sistem.'
                     });
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.' });
-            });
+                });
         }
     </script>
 </body>
-</html>
 
+</html>

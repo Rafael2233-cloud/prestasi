@@ -606,6 +606,43 @@ a {
   text-decoration: none;
 }
 
+/* --- RESPONSIVE GRID SISTEM --- */
+
+/* Default Desktop: Jejer 2 */
+.mid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Tablet (Layar Sedang) */
+@media (max-width: 1024px) {
+  .mid-grid {
+    grid-template-columns: 1fr; /* Jadi 1 kolom */
+  }
+}
+
+/* HP (Layar Kecil) */
+@media (max-width: 768px) {
+  .stats-grid-4 {
+    grid-template-columns: 1fr !important; /* Stats jadi 1 kolom ke bawah */
+    gap: 12px;
+  }
+
+  .mid-grid {
+    grid-template-columns: 1fr !important; /* Grafik & Leaderboard jadi 1 kolom */
+    gap: 15px;
+  }
+
+  .content-wrapper-new {
+    padding: 15px !important;
+  }
+}
+.panel-card {
+  min-height: 300px; /* Biar ukurannya gak loncat-loncat */
+}
+
 @media (max-width: 768px) {
   .page-header-flex {
     flex-direction: column;

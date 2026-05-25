@@ -155,7 +155,7 @@ $avatar_classes = ['av-orange', 'av-purple', 'av-blue', 'av-cyan', 'av-pink'];
     </div>
 
     <!-- Mid Grid -->
-    <div class="mid-grid animate-slide-up d-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <div class="mid-grid animate-slide-up d-2" >
         <!-- Grafik Perkembangan Prestasi -->
         <div class="panel-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); padding: 20px; display: flex; flex-direction: column;">
             <div class="pc-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
