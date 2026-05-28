@@ -50,6 +50,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <a href="PersetujuanPoin.php"><i class="fa-solid fa-check-to-slot"></i> <span class="menu-text">Persetujuan Poin</span><?php if ($total_poin_pending > 0): ?><span class="badge"><?= $total_poin_pending ?></span><?php endif; ?></a>
             </li>
         </ul>
+
+        <div class="sidebar-menu-title mt-custom" style="margin-top: 15px;">LAPORAN</div>
+        <ul class="sidebar-menu-new">
+            <li class="menu-item-new <?php echo ($current_page == 'LaporanPertahun.php') ? 'active' : ''; ?>"><a href="LaporanPertahun.php"><i class="fa-solid fa-calendar"></i> <span class="menu-text">Laporan per Tahun</span></a></li>
+            <li class="menu-item-new <?php echo ($current_page == 'LaporanPerDosen.php') ? 'active' : ''; ?>"><a href="LaporanPerDosen.php"><i class="fa-solid fa-user-tie"></i> <span class="menu-text">Laporan per Dosen</span></a></li>
+            <li class="menu-item-new <?php echo ($current_page == 'LaporanPerKategori.php') ? 'active' : ''; ?>"><a href="LaporanPerKategori.php"><i class="fa-solid fa-layer-group"></i> <span class="menu-text">Laporan per Kategori</span></a></li>
+            <li class="menu-item-new <?php echo ($current_page == 'LaporanPerMahasiswa.php') ? 'active' : ''; ?>"><a href="LaporanPerMahasiswa.php"><i class="fa-solid fa-user-graduate"></i> <span class="menu-text">Laporan per Mahasiswa</span></a></li>
+            <li class="menu-item-new <?php echo ($current_page == 'CekPoin.php') ? 'active' : ''; ?>"><a href="CekPoin.php"><i class="fa-solid fa-star"></i> <span class="menu-text">Cek Poin</span></a></li>
+        </ul>
     </div>
 
     <div class="sidebar-footer-new">
